@@ -2,6 +2,7 @@ import pickle
 from tqdm import tqdm
 import pandas as pd
 import json
+import torch
 
 def load_train_data(data_path) :
     '''
@@ -18,8 +19,7 @@ def load_train_data(data_path) :
             if not (x > 0 and y > 0):
                 count_flag += 1
         if count_flag == 0:
-            # (x, y) -> (h, w)
-            train_X[key] = [[y, x] for x, y in val]
+            train_X[key] = [[y, x] for x, y in val] # (x, y) -> (h, w)
     return train
 
 def load_test_data(data_path) :
@@ -30,6 +30,27 @@ def load_test_data(data_path) :
         w_points = json.loads(w_points_str)
         test_X[file_name] = [[h, w] for h, w in zip(h_points, w_points)]
     return test_X
+
+
+#=================== 밑에는 doc code ========================
+
+
+def indexesFromSentence(lang, sentence):
+    return [lang.word2index[word] for word in sentence.split(' ')]
+
+def tensorFromSentence(lang, sentence, EOS_token, device):
+    indexes = indexesFromSentence(lang, sentence)
+    indexes.append(EOS_token)
+    return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
+
+def tensorsFromPair(pair, input_lang, output_lang, EOS_token, device):
+    input_tensor = tensorFromSentence(input_lang, pair[0], EOS_token, device)
+    target_tensor = tensorFromSentence(output_lang, pair[1], EOS_token, device)
+    return (input_tensor, target_tensor)
+
+
+
+
 
 
 if __name__ == "__main__":
