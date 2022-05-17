@@ -6,9 +6,7 @@ class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size, device):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
-
-        self.embedding = nn.Embedding(input_size, hidden_size)
-        self.gru = nn.GRU(hidden_size, hidden_size)
+        self.gru = nn.GRU(input_size, hidden_size)
         self.device = device
 
     def forward(self, input, hidden):
@@ -40,3 +38,10 @@ class DecoderRNN(nn.Module):
 
     def initHidden(self):
         return torch.zeros(1, 1, self.hidden_size, device=self.device)
+
+import utils
+if __name__ == '__main__' :
+    data_path = 'dataset/train/pose_label.pkl'
+    data = utils.load_train_data(data_path)
+
+    key_points = data['fasionWOMENDressesid0000041606_7additional']

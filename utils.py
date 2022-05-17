@@ -20,7 +20,7 @@ def load_train_data(data_path) :
                 count_flag += 1
         if count_flag == 0:
             train_X[key] = [[y, x] for x, y in val] # (x, y) -> (h, w)
-    return train
+    return train_X
 
 def load_test_data(data_path) :
     df = pd.read_csv(data_path, sep=':')

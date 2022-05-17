@@ -46,7 +46,7 @@ if __name__ == "__main__":
                       EOS_token=EOS_token,
                       teacher_forcing_ratio=teacher_forcing_ratio)
 
-    trainer.trainIters(n_iters = 100,
+    trainer.trainIters(n_iters = 75000,
                        pairs = pairs,
                        input_lang= input_lang,
                        output_lang=output_lang,
