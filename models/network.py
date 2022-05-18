@@ -47,16 +47,20 @@ if __name__ == '__main__' :
     data = utils.load_train_data(data_path)
 
     key_points = data['fasionWOMENDressesid0000041606_7additional']
-
-    max_length = 18
+    key_points.extend([[0, 0]])
+    input_length = len(key_points)
+    max_length = 19
     hidden_size = 10
 
+    # Encoder
     encoder_outputs = torch.zeros(max_length, hidden_size, device=device)
-
-    input_ = torch.Tensor(key_points)
-
+    input_tensor = torch.Tensor(key_points)
+    input_tensor = input_tensor.unsqueeze(1)
     encoder = EncoderRNN(2, 10, device)
     encoder_hidden = encoder.initHidden()
-    output, hidden = encoder(input_, encoder_hidden)
+
+    encoder_output, encoder_hidden = encoder(input_tensor, encoder_hidden)
 
 
+    decoder = AttnDecoderRNN()
+    print(2)
