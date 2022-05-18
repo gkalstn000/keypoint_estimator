@@ -48,6 +48,11 @@ if __name__ == '__main__' :
 
     key_points = data['fasionWOMENDressesid0000041606_7additional']
 
+    max_length = 18
+    hidden_size = 10
+
+    encoder_outputs = torch.zeros(max_length, hidden_size, device=device)
+
     input_ = torch.Tensor(key_points)
 
     encoder = EncoderRNN(2, 10, device)
