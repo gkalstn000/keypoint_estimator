@@ -19,6 +19,12 @@ class MyDataSet(Data.Dataset):
         return len(self.file_name)
 
     def __getitem__(self, idx):
+
+        MASK_point = np.array([-1, -1])
+        SOS_point = np.array([[0, -1]])
+        EOS_point = np.array([[-1, 0]])
+
+
         R, R_inv, T = self.affine_matrix(self.height, self.width)
 
         tgt = self.key_points @ R_inv - R_inv @ T # (B, L, 2)
@@ -32,8 +38,8 @@ class MyDataSet(Data.Dataset):
         erase_idx = np.logical_or(cond1_logical, cond2_logical)
 
         src = tgt.copy()
-        src[erase_idx] = np.array([-1, -1])
-        return src[idx], tgt[idx]
+        src[erase_idx] = MASK_point
+        return  np.append(src[idx], EOS_point, axis = 0), np.append(SOS_point, tgt[idx], axis = 0)
 
 
 

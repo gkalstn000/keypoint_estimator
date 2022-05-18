@@ -28,14 +28,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 if __name__ == "__main__":
-    '''
-    MASK point = [-1, -1]
-    SOS point = [0, -1]
-    EOS point = [-1, 0]
-    '''
-    MASK_point = [-1, -1]
-    SOS_point = [0, -1]
-    EOS_point = [-1, 0]
+
     MAX_LENGTH = 19
 
     height = 256
