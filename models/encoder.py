@@ -8,18 +8,18 @@ class EncoderRNN(nn.Module):
         # hidden_size : 10
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
-        self.gru = nn.GRU(input_size, hidden_size)
+        self.gru = nn.GRU(input_size, hidden_size, batch_first= True)
         self.device = device
 
     def forward(self, input, hidden):
-        # input size : (L, N, H_in)
+        # input size : (N, L, H_in) or (L, H_in)
         if len(input.size()) == 2 :
-            input = input.unsqueeze(1) # (L, N, H_in)
+            input = input.unsqueeze(0) # (N, L, H_in)
         output, hidden = self.gru(input, hidden)
         return output, hidden
 
-    def initHidden(self):
-        return torch.zeros(1, 1, self.hidden_size, device=self.device)
+    def initHidden(self, batch_size = 1):
+        return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
 
 class DecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, device):
@@ -27,7 +27,7 @@ class DecoderRNN(nn.Module):
         # output_size : 2
         super(DecoderRNN, self).__init__()
         self.hidden_size = hidden_size
-        self.gru = nn.GRU(hidden_size, hidden_size)
+        self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True)
         self.out = nn.Linear(hidden_size, output_size)
         self.softmax = nn.LogSoftmax(dim=1)
         self.device = device
@@ -38,8 +38,8 @@ class DecoderRNN(nn.Module):
         output = self.softmax(self.out(output[0]))
         return output, hidden
 
-    def initHidden(self):
-        return torch.zeros(1, 1, self.hidden_size, device=self.device)
+    def initHidden(self, batch_size = 1):
+        return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
 
 import utils
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
