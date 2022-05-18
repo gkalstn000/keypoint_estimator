@@ -54,3 +54,7 @@ if __name__ == '__main__' :
     encoder = EncoderRNN(2, 10, device)
     encoder_hidden = encoder.initHidden()
     output, hidden = encoder(input_, encoder_hidden)
+
+    decoder = DecoderRNN(10, 2, device)
+    decoder_hidden = decoder.initHidden()
+    output, hidden = decoder(output, decoder_hidden)
