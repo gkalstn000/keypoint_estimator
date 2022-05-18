@@ -10,8 +10,7 @@ class EncoderRNN(nn.Module):
         self.device = device
 
     def forward(self, input, hidden):
-        embedded = self.embedding(input).view(1, 1, -1)
-        output = embedded
+        output = input # (B, N, 2)
         output, hidden = self.gru(output, hidden)
         return output, hidden
 
@@ -40,8 +39,15 @@ class DecoderRNN(nn.Module):
         return torch.zeros(1, 1, self.hidden_size, device=self.device)
 
 import utils
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == '__main__' :
     data_path = 'dataset/train/pose_label.pkl'
     data = utils.load_train_data(data_path)
 
     key_points = data['fasionWOMENDressesid0000041606_7additional']
+
+    input_ = torch.Tensor(key_points).unsqueeze(0)
+
+    encoder = EncoderRNN(2, 10, device)
+    encoder_hidden = encoder.initHidden()
+    output, hidden = encoder(input_, encoder_hidden)
