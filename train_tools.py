@@ -44,6 +44,7 @@ class Trainer :
                           for i in range(n_iters)]
         criterion = nn.NLLLoss()
 
+        # 여기 batch 단위로 받도록 수정해야겠음.
         for iter in trange(1, n_iters + 1):
             training_pair = training_pairs[iter - 1]
             input_tensor = training_pair[0]
