@@ -19,8 +19,11 @@ class AttnDecoderRNN(nn.Module):
         self.device = device
 
     def forward(self, input, hidden, encoder_outputs):
-        embedded = self.embedding(input).view(-1, 1, self.hidden_size) # (L, B, H_in)
-        embedded = self.dropout(embedded) # (B, L, H_in)
+        # input size : (B, 1, 2)
+        # hidden size : (1, B, hidden)
+        # embedded size : (B, 1, hidden)
+        embedded = self.embedding(input) # (B, L, hidden)
+        embedded = self.dropout(embedded)
 
         hidden_transpose = hidden.transpose(1, 0)
 
@@ -31,10 +34,10 @@ class AttnDecoderRNN(nn.Module):
         output = torch.cat((embedded, attn_applied), 2)
         output = self.attn_combine(output)
 
-        output = F.relu(output)
+        # output = F.relu(output)
         output, hidden = self.gru(output, hidden)
 
-        output = F.log_softmax(self.out(output[0]), dim=1)
+        output = self.out(output)
         return output, hidden, attn_weights
 
     def initHidden(self, batch_size = 1):
@@ -48,7 +51,7 @@ if __name__ == '__main__' :
     data = utils.load_train_data(data_path)
 
     key_points = data.values()
-    key_points = list(key_points)[:2]
+    key_points = list(key_points)[:10]
     input_length = len(key_points)
     max_length = 19
     hidden_size = 10
@@ -58,7 +61,7 @@ if __name__ == '__main__' :
     # Encoder
     EOS = torch.Tensor([0, 0])
     input_tensor = torch.Tensor(key_points)
-    input_tensor = torch.cat((input_tensor, EOS.repeat((2, 1, 1))), dim=1)
+    input_tensor = torch.cat((input_tensor, EOS.repeat((10, 1, 1))), dim=1)
     encoder = EncoderRNN(input_size, hidden_size, device)
     encoder_hidden = encoder.initHidden(input_length)
 

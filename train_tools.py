@@ -15,21 +15,15 @@ class Trainer :
                  decoder,
                  max_length,
                  device,
-                 SOS_token,
-                 EOS_token,
                  teacher_forcing_ratio):
         self.encoder = encoder
         self.decoder = decoder
         self.max_length = max_length
         self.device = device
-        self.SOS_token = SOS_token
-        self.EOS_token = EOS_token
         self.teacher_forcing_ratio = teacher_forcing_ratio
     def trainIters(self,
                    n_iters,
-                   pairs,
-                   input_lang,
-                   output_lang,
+                   dataloader,
                    print_every=1000,
                    plot_every=100,
                    learning_rate=0.01):
@@ -40,22 +34,21 @@ class Trainer :
 
         encoder_optimizer = optim.SGD(self.encoder.parameters(), lr=learning_rate)
         decoder_optimizer = optim.SGD(self.decoder.parameters(), lr=learning_rate)
-        training_pairs = [utils.tensorsFromPair(random.choice(pairs), input_lang, output_lang, self.EOS_token, self.device)
-                          for i in range(n_iters)]
-        criterion = nn.NLLLoss()
+
+        criterion = nn.MSELoss()
 
         # 여기 batch 단위로 받도록 수정해야겠음.
-        for iter in trange(1, n_iters + 1):
-            training_pair = training_pairs[iter - 1]
-            input_tensor = training_pair[0]
-            target_tensor = training_pair[1]
+        for iter, (src, tgt) in enumerate(tqdm(dataloader)):
+            iter += 1
+            src, tgt = src.float(), tgt.float()
 
-            loss = self.train(input_tensor,
-                         target_tensor,
+            loss = self.train(src,
+                         tgt,
                          encoder_optimizer,
                          decoder_optimizer,
                          criterion
                          )
+
             print_loss_total += loss
             plot_loss_total += loss
 
@@ -73,60 +66,52 @@ class Trainer :
         eval_tools.showPlot(plot_losses)
 
     def train(self,
-              input_tensor,
-              target_tensor,
+              src,
+              tgt,
               encoder_optimizer,
               decoder_optimizer,
               criterion):
-        encoder_hidden = self.encoder.initHidden()
+        batch_size = len(src)
+        encoder_hidden = self.encoder.initHidden(batch_size)
 
         encoder_optimizer.zero_grad()
         decoder_optimizer.zero_grad()
 
-        input_length = input_tensor.size(0)
-        target_length = target_tensor.size(0)
-
-        encoder_outputs = torch.zeros(self.max_length, self.encoder.hidden_size, device=self.device)
-
         loss = 0
 
-        for ei in range(input_length):
-            encoder_output, encoder_hidden = self.encoder(
-                input_tensor[ei], encoder_hidden)
-            encoder_outputs[ei] = encoder_output[0, 0]
+        encoder_output, encoder_hidden = self.encoder(src, encoder_hidden)
 
-        decoder_input = torch.tensor([[self.SOS_token]], device=self.device)
-
+        # decoder_input = torch.tensor([[self.SOS_token]], device=self.device)
         decoder_hidden = encoder_hidden
 
-        use_teacher_forcing = True if random.random() < self.teacher_forcing_ratio else False
-
+        # use_teacher_forcing = True if random.random() < self.teacher_forcing_ratio else False
+        use_teacher_forcing = True
         if use_teacher_forcing:
-            # Teacher forcing 포함: 목표를 다음 입력으로 전달
-            for di in range(target_length):
+            for di in range(tgt.size(1)-1) :
+                decoder_src = tgt[:, di, :].unsqueeze(1)
+                decoder_tgt = tgt[:, di+1, :].unsqueeze(1)
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs)
-                loss += criterion(decoder_output, target_tensor[di])
-                decoder_input = target_tensor[di]  # Teacher forcing
+                    decoder_src, decoder_hidden, encoder_output)
+                loss += criterion(decoder_output, decoder_tgt)
 
         else:
-            # Teacher forcing 미포함: 자신의 예측을 다음 입력으로 사용
-            for di in range(target_length):
+            decoder_src = tgt[:, 0, :].unsqueeze(1)
+            for di in range(1, tgt.size(1)) :
+                # Teacher forcing 미포함: 자신의 예측을 다음 입력으로 사용
+                decoder_tgt = tgt[:, di, :].unsqueeze(1)
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs)
-                topv, topi = decoder_output.topk(1)
-                decoder_input = topi.squeeze().detach()  # 입력으로 사용할 부분을 히스토리에서 분리
+                    decoder_src, decoder_hidden, encoder_output)
+                decoder_src = decoder_output
 
-                loss += criterion(decoder_output, target_tensor[di])
-                if decoder_input.item() == self.EOS_token:
-                    break
+                loss += criterion(decoder_output, decoder_tgt)
+
 
         loss.backward()
 
         encoder_optimizer.step()
         decoder_optimizer.step()
 
-        return loss.item() / target_length
+        return loss.item() / tgt.size(0)
 
 def asMinutes(s):
     m = math.floor(s / 60)

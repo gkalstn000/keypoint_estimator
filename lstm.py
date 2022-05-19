@@ -54,15 +54,11 @@ if __name__ == "__main__":
                       decoder=attn_decoder1,
                       max_length=MAX_LENGTH,
                       device=device,
-                      SOS_token=SOS_token,
-                      EOS_token=EOS_token,
                       teacher_forcing_ratio=teacher_forcing_ratio)
 
     trainer.trainIters(n_iters = 75000,
-                       pairs = pairs,
-                       input_lang= input_lang,
-                       output_lang=output_lang,
-                       print_every=5000)
+                       print_every=5000,
+                       dataloader=dataloader)
 
     eval = Evaler(encoder=encoder1,
                   decoder=attn_decoder1,

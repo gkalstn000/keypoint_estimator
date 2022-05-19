@@ -20,9 +20,9 @@ class MyDataSet(Data.Dataset):
 
     def __getitem__(self, idx):
 
-        MASK_point = np.array([-1, -1])
-        SOS_point = np.array([[0, -1]])
-        EOS_point = np.array([[-1, 0]])
+        MASK_point = np.array([-1.0, -1.0])
+        SOS_point = np.array([[0.0, -1.0]])
+        EOS_point = np.array([[-1.0, 0.0]])
 
 
         R, R_inv, T = self.affine_matrix(self.height, self.width)
