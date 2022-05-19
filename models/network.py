@@ -22,8 +22,8 @@ class AttnDecoderRNN(nn.Module):
         # input size : (B, 1, 2)
         # hidden size : (1, B, hidden)
         # embedded size : (B, 1, hidden)
-        embedded = self.embedding(input) # (B, L, hidden)
-        embedded = self.dropout(embedded)
+        embedded = self.embedding(input) # (B, 1, hidden)
+        # embedded = self.dropout(embedded)
 
         hidden_transpose = hidden.transpose(1, 0)
 

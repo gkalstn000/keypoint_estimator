@@ -55,8 +55,9 @@ if __name__ == "__main__":
                       device=device,
                       teacher_forcing_ratio=teacher_forcing_ratio)
 
-    trainer.trainIters(n_iters = 1,
-                       print_every=5000,
+    trainer.trainIters(n_iters = 10,
+                       print_every=1,
+                       plot_every = 1,
                        dataloader=dataloader)
 
     eval = Evaler(encoder=encoder1,

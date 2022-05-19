@@ -54,16 +54,16 @@ class Trainer :
                 print_loss_total += loss
                 plot_loss_total += loss
 
-                if iter % print_every == 0:
-                    print_loss_avg = print_loss_total / print_every
-                    print_loss_total = 0
-                    print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
-                                                 iter, iter / n_iters * 100, print_loss_avg))
+            if iter % print_every == 0:
+                print_loss_avg = print_loss_total / print_every
+                print_loss_total = 0
+                print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
+                                             iter, iter / n_iters * 100, print_loss_avg))
 
-                if iter % plot_every == 0:
-                    plot_loss_avg = plot_loss_total / plot_every
-                    plot_losses.append(plot_loss_avg)
-                    plot_loss_total = 0
+            if iter % plot_every == 0:
+                plot_loss_avg = plot_loss_total / plot_every
+                plot_losses.append(plot_loss_avg)
+                plot_loss_total = 0
 
         eval_tools.showPlot(plot_losses)
 
