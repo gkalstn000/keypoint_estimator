@@ -70,4 +70,6 @@ if __name__ == "__main__":
 
     output_words, attentions = eval.evaluate(src)
     plt.matshow(attentions.numpy())
+    plt.savefig("attentions.png")
+
 
