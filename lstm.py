@@ -37,10 +37,9 @@ if __name__ == "__main__":
     input_size = 2
     output_size = 2
     hidden_size = 10
-    batch_size = 64
+    batch_size = 128
 
     teacher_forcing_ratio = 0.5
-    batch_size = 10
 
     data_path = 'dataset/train/pose_label.pkl'
     data_dict = utils.load_train_data(data_path)
@@ -56,19 +55,14 @@ if __name__ == "__main__":
                       device=device,
                       teacher_forcing_ratio=teacher_forcing_ratio)
 
-    trainer.trainIters(n_iters = 75000,
+    trainer.trainIters(n_iters = 1,
                        print_every=5000,
                        dataloader=dataloader)
 
     eval = Evaler(encoder=encoder1,
                   decoder=attn_decoder1,
-                  pairs=pairs,
                   max_length=MAX_LENGTH,
-                  input_lang=input_lang,
-                  output_lang=output_lang,
-                  device=device,
-                  SOS_token=SOS_token,
-                  EOS_token=EOS_token)
+                  device=device)
     eval.evaluateRandomly()
 
     output_words, attentions = eval.evaluate(sentence="je suis trop froid .")

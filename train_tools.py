@@ -38,30 +38,32 @@ class Trainer :
         criterion = nn.MSELoss()
 
         # 여기 batch 단위로 받도록 수정해야겠음.
-        for iter, (src, tgt) in enumerate(tqdm(dataloader)):
+
+        for iter in trange(n_iters) :
             iter += 1
-            src, tgt = src.float(), tgt.float()
+            for src, tgt in dataloader:
+                src, tgt = src.float(), tgt.float()
 
-            loss = self.train(src,
-                         tgt,
-                         encoder_optimizer,
-                         decoder_optimizer,
-                         criterion
-                         )
+                loss = self.train(src,
+                             tgt,
+                             encoder_optimizer,
+                             decoder_optimizer,
+                             criterion
+                             )
 
-            print_loss_total += loss
-            plot_loss_total += loss
+                print_loss_total += loss
+                plot_loss_total += loss
 
-            if iter % print_every == 0:
-                print_loss_avg = print_loss_total / print_every
-                print_loss_total = 0
-                print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
-                                             iter, iter / n_iters * 100, print_loss_avg))
+                if iter % print_every == 0:
+                    print_loss_avg = print_loss_total / print_every
+                    print_loss_total = 0
+                    print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
+                                                 iter, iter / n_iters * 100, print_loss_avg))
 
-            if iter % plot_every == 0:
-                plot_loss_avg = plot_loss_total / plot_every
-                plot_losses.append(plot_loss_avg)
-                plot_loss_total = 0
+                if iter % plot_every == 0:
+                    plot_loss_avg = plot_loss_total / plot_every
+                    plot_losses.append(plot_loss_avg)
+                    plot_loss_total = 0
 
         eval_tools.showPlot(plot_losses)
 

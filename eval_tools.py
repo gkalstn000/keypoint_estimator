@@ -19,22 +19,14 @@ class Evaler :
     def __init__(self,
                  encoder,
                  decoder,
-                 pairs,
                  max_length,
-                 input_lang,
-                 output_lang,
-                 device,
-                 SOS_token,
-                 EOS_token,):
+                 dataloader,
+                 device):
         self.encoder = encoder
         self.decoder = decoder
-        self.pairs = pairs
         self.max_length = max_length
-        self.input_lang = input_lang
-        self.output_lang = output_lang
         self.device = device
-        self.SOS_token = SOS_token
-        self.EOS_token = EOS_token
+        self.dataloader = dataloader
 
     def evaluateRandomly(self,n=10):
         for i in range(n):
@@ -83,3 +75,39 @@ class Evaler :
                 decoder_input = topi.squeeze().detach()
 
             return decoded_words, decoder_attentions[:di + 1]
+
+
+from data.mydata import MyDataSet
+import torch.utils.data as Data
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from models.encoder import EncoderRNN, DecoderRNN
+from models.network import AttnDecoderRNN
+if __name__ == '__main__' :
+    MAX_LENGTH = 19
+
+    height = 256
+    width = 256
+
+    input_size = 2
+    output_size = 2
+    hidden_size = 10
+    batch_size = 128
+
+    teacher_forcing_ratio = 0.5
+
+    data_path = 'dataset/train/pose_label.pkl'
+    data_dict = utils.load_train_data(data_path)
+    mydata = MyDataSet(data_dict, height, width)
+
+    dataloader = Data.DataLoader(mydata, batch_size, True)
+
+    encoder1 = EncoderRNN(input_size, hidden_size, device).to(device)
+    attn_decoder1 = AttnDecoderRNN(hidden_size, output_size, MAX_LENGTH, device, dropout_p=0.1).to(device)
+
+    eval = Evaler(encoder=encoder1,
+                  decoder=attn_decoder1,
+                  max_length=MAX_LENGTH,
+                  dataloader=dataloader,
+                  device=device)
+
+    eval.evaluateRandomly()
