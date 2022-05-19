@@ -28,53 +28,44 @@ class Evaler :
         self.device = device
         self.dataloader = dataloader
 
+    def print_points(self, src, tgt, pred, key_point_name):
+        src = src[:-1]
+        tgt = tgt[1:]
+        pred = pred.numpy()
+        strFormat = '%-12s%-12s%-12s%-12s\n'
+        strOut = strFormat % ('Name', 'Source', 'Target', 'Pred')
+        for name, src_p, tgt_p, pred_ in zip(key_point_name, src.astype(np.int8), tgt.astype(np.int8), pred.astype(np.int8)) :
+            strOut += strFormat % (name, src_p, tgt_p, pred_)
+        print(strOut)
     def evaluateRandomly(self,n=10):
+        key_point_name = ['Nose', 'Neck', 'R_shoulder', 'R_elbow', 'R_wrist', 'L_shoulder', 'L_elbow', 'L_wrist',
+                          'R_pelvis', 'R_knee', 'R_ankle', 'L_pelvis', 'L_knee', 'L_ankle','R_eye', 'L_eye', 'R_ear', 'L_ear']
         for i in range(n):
-            pair = random.choice(self.pairs)
-            print('>', pair[0])
-            print('=', pair[1])
-            output_words, attentions = self.evaluate(sentence=pair[0])
-            output_sentence = ' '.join(output_words)
-            print('<', output_sentence)
-            print('')
+            src, tgt = random.choice(self.dataloader.dataset)
+            output_point, attentions = self.evaluate(point=src)
+            self.print_points(src, tgt, output_point, key_point_name)
 
-    def evaluate(self, sentence):
+    def evaluate(self, point):
         with torch.no_grad():
-            input_tensor = utils.tensorFromSentence(lang = self.input_lang,
-                                                    sentence=sentence,
-                                                    EOS_token=self.EOS_token,
-                                                    device=self.device)
-            input_length = input_tensor.size()[0]
+            point = torch.from_numpy(point).float()
             encoder_hidden = self.encoder.initHidden()
 
-            encoder_outputs = torch.zeros(self.max_length, self.encoder.hidden_size, device=self.device)
-
-            for ei in range(input_length):
-                encoder_output, encoder_hidden = self.encoder(input_tensor[ei],
-                                                         encoder_hidden)
-                encoder_outputs[ei] += encoder_output[0, 0]
-
-            decoder_input = torch.tensor([[self.SOS_token]], device=self.device)  # SOS
+            encoder_output, encoder_hidden = self.encoder(point, encoder_hidden)
 
             decoder_hidden = encoder_hidden
 
-            decoded_words = []
+            decoded_outputs = []
             decoder_attentions = torch.zeros(self.max_length, self.max_length)
 
-            for di in range(self.max_length):
+            decoder_input = point[0][None, None, :]
+            for di in range(1, self.max_length):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs)
-                decoder_attentions[di] = decoder_attention.data
-                topv, topi = decoder_output.data.topk(1)
-                if topi.item() == self.EOS_token:
-                    decoded_words.append('<EOS>')
-                    break
-                else:
-                    decoded_words.append(self.output_lang.index2word[topi.item()])
+                    decoder_input, decoder_hidden, encoder_output)
+                decoder_attentions[di-1] = decoder_attention
+                decoder_input = decoder_output
+                decoded_outputs.append(decoder_output)
 
-                decoder_input = topi.squeeze().detach()
-
-            return decoded_words, decoder_attentions[:di + 1]
+            return torch.cat(decoded_outputs, 0).squeeze(), decoder_attentions
 
 
 from data.mydata import MyDataSet

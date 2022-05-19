@@ -62,9 +62,12 @@ if __name__ == "__main__":
     eval = Evaler(encoder=encoder1,
                   decoder=attn_decoder1,
                   max_length=MAX_LENGTH,
+                  dataloader=dataloader,
                   device=device)
     eval.evaluateRandomly()
 
-    output_words, attentions = eval.evaluate(sentence="je suis trop froid .")
+    src, tgt = random.choice(dataloader.dataset)
+
+    output_words, attentions = eval.evaluate(src)
     plt.matshow(attentions.numpy())
 
