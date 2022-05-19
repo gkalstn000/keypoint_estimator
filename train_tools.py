@@ -26,7 +26,7 @@ class Trainer :
                    dataloader,
                    print_every=1000,
                    plot_every=100,
-                   learning_rate=0.01):
+                   learning_rate=0.0005):
         start = time.time()
         plot_losses = []
         print_loss_total = 0  # print_every 마다 초기화
@@ -42,6 +42,8 @@ class Trainer :
         for iter in trange(n_iters) :
             iter += 1
             for src, tgt in dataloader:
+                self.encoder.train()
+                self.decoder.train()
                 src, tgt = src.float(), tgt.float()
 
                 loss = self.train(src,

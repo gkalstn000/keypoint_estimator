@@ -11,7 +11,7 @@ class AttnDecoderRNN(nn.Module):
         self.max_length = max_length
 
         self.embedding = nn.Linear(self.output_size, self.hidden_size)
-        self.attn = nn.Linear(self.hidden_size * 2, self.max_length)
+        self.d_hidden = nn.Linear(self.hidden_size * 2, self.hidden_size)
         self.attn_combine = nn.Linear(self.hidden_size * 2, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
         self.gru = nn.GRU(self.hidden_size, self.hidden_size, batch_first=True)
@@ -22,23 +22,22 @@ class AttnDecoderRNN(nn.Module):
         # input size : (B, 1, 2)
         # hidden size : (1, B, hidden)
         # embedded size : (B, 1, hidden)
+
         embedded = self.embedding(input) # (B, 1, hidden)
         # embedded = self.dropout(embedded)
+        output, hidden = self.gru(embedded, hidden)
 
-        hidden_transpose = hidden.transpose(1, 0)
+        attention_scores = encoder_outputs @ output.transpose(2, 1)
+        attention_weight = F.softmax(attention_scores, dim=1)
+        attention_value = encoder_outputs * attention_weight
+        attention_vector = attention_value.sum(dim=1, keepdim = True)
 
-        attn_weights = F.softmax(
-            self.attn(torch.cat((embedded, hidden_transpose), dim = 2)), dim=2) # (B, 1, L)
-        attn_applied = torch.bmm(attn_weights, encoder_outputs)
-
-        output = torch.cat((embedded, attn_applied), 2)
+        output = torch.cat((output, attention_vector), 2)
         output = self.attn_combine(output)
-
         # output = F.relu(output)
-        output, hidden = self.gru(output, hidden)
-
         output = self.out(output)
-        return output, hidden, attn_weights
+
+        return output, hidden, 0
 
     def initHidden(self, batch_size = 1):
         return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
