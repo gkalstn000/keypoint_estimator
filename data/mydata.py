@@ -19,15 +19,17 @@ class MyDataSet(Data.Dataset):
         return len(self.file_name)
 
     def __getitem__(self, idx):
+        R, R_inv, T = self.affine_matrix_batch()
 
-        MASK_point = np.array([-1.0, -1.0])
-        SOS_point = np.array([[0.0, -1.0]])
-        EOS_point = np.array([[-1.0, 0.0]])
+        scaling = self.key_points @ R_inv
+        moving = R_inv @ np.expand_dims(T, axis=2)
+        tgt = scaling - moving.transpose(0, 2, 1)  # (B, L, 2)
 
-
-        R, R_inv, T = self.affine_matrix(self.height, self.width)
-
-        tgt = self.key_points @ R_inv - R_inv @ T # (B, L, 2)
+        # Normalization을 위한 values
+        max_point = np.array([[256, 256]]) @ R_inv - moving.transpose(0, 2, 1)
+        min_point = -moving.transpose(0, 2, 1)
+        mid_point = (max_point + min_point) / 2
+        length = max_point - min_point
 
         cond1 = tgt > np.array([self.height, self.width])
         cond2 = tgt < np.array([0, 0])
@@ -35,21 +37,38 @@ class MyDataSet(Data.Dataset):
         cond1_logical = np.logical_or(cond1[:, :, 0], cond1[:, :, 1])
         cond2_logical = np.logical_or(cond2[:, :, 0], cond2[:, :, 1])
 
-        erase_idx = np.logical_or(cond1_logical, cond2_logical)
+        unknown_index = np.logical_or(cond1_logical, cond2_logical)
+        # 없애면 1, 안 없애면 0
+        unknown_token = np.expand_dims(unknown_index, axis = 2)
 
         src = tgt.copy()
-        src[erase_idx] = MASK_point
-        return  np.append(src[idx], EOS_point, axis = 0), np.append(SOS_point, tgt[idx], axis = 0)
+        src_norm = (src-mid_point) * 2 / length
+        src_norm_with_unknown = np.concatenate((src_norm, unknown_token), axis = 2)
+        return  src_norm_with_unknown[idx], tgt[idx], mid_point[idx], length[idx]
 
 
+    def affine_matrix_batch(self):
 
-    def affine_matrix(self, height, width, alpha=32, beta=20):
-        h_blank = height / 10
-        w_blank = width / 10
+        Rs, R_invs, Ts = [], [], []
+        for _ in range(self.key_points.shape[0]):
+            R, R_inv, T = self.affine_matrix()
+            Rs.append(R)
+            R_invs.append(R_inv)
+            Ts.append(T)
+
+        R = np.stack(Rs, axis=0)
+        R_inv = np.stack(R_invs, axis=0)
+        T = np.stack(Ts, axis=0)
+
+        return R, R_inv, T
+
+    def affine_matrix(self, alpha=32, beta=20):
+        h_blank = self.height / 10
+        w_blank = self.width / 10
         while True:
             h_scale, w_scale = random.beta(alpha, beta, size=2)
-            h_move = random.uniform(0, (1 - h_scale) * height)
-            w_move = random.uniform(0, (1 - w_scale) * width)
+            h_move = random.uniform(0, (1 - h_scale) * self.height)
+            w_move = random.uniform(0, (1 - w_scale) * self.width)
 
             R = np.array([[h_scale, 0],
                           [0, w_scale]])
@@ -57,10 +76,10 @@ class MyDataSet(Data.Dataset):
 
             R_inv = np.linalg.inv(R)
 
-            x_max = np.array([height, width])
+            x_max = np.array([self.height, self.width])
             max_transform = R @ x_max + T
 
-            if max_transform[0] + h_blank < height and max_transform[1] + w_blank < width:
+            if max_transform[0] + h_blank < self.height and max_transform[1] + w_blank < self.width:
                 break
 
         return R, R_inv, T
@@ -70,21 +89,27 @@ def plot_key_points(src, tgt) :
                      [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7],
                      [1, 8], [8, 9], [9, 10], [1, 11], [11, 12], [12, 13]]
 
-    invalid = torch.Tensor([-1.0, -1.0])
+    if type(src) != np.ndarray:
+        src.numpy()
+        tgt.numpy()
+
+    invalid = np.array([-1.0, -1.0])
     # tgt drawing
-    for p1, p2 in skeleton_tree :
+    for p1, p2 in skeleton_tree:
         h1, w1 = tgt[p1]
         h2, w2 = tgt[p2]
-        plt.plot([h1, h2], [w1, w2], color = 'red')
+        plt.plot([h1, h2], [w1, w2], color='red')
     # src drawing
-    for p1, p2 in skeleton_tree :
-        if (src[p1] == invalid).sum() > 0 or (src[p2] == invalid).sum() > 0 : continue
+    for p1, p2 in skeleton_tree:
+        if (src[p1] == invalid).sum() > 0 or (src[p2] == invalid).sum() > 0: continue
         h1, w1 = src[p1]
         h2, w2 = src[p2]
-        plt.plot([h1, h2], [w1, w2], color = 'green')
-
+        plt.plot([h1, h2], [w1, w2], color='green')
 
     plt.show()
+
+def denormalization(points, mid_point, length) :
+    return (points * length) / 2 + mid_point
 
 import utils
 if __name__ == '__main__' :
@@ -98,7 +123,7 @@ if __name__ == '__main__' :
     batch_size = 10
     dataloader = Data.DataLoader(mydata, batch_size, True)
 
-    for src, tgt in dataloader :
+    for src, tgt, mid_point, length in dataloader :
         print(src)
         print(tgt)
         break
