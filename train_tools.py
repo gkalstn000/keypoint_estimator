@@ -96,20 +96,19 @@ class Trainer :
                 decoder_tgt = tgt[:, di+1, :].unsqueeze(1)
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(
                     decoder_src, decoder_hidden, encoder_output)
-                loss += criterion(decoder_output, decoder_tgt)
-
+                # loss += torch.log(criterion(decoder_output, decoder_tgt))
+                loss += criterion(decoder_output, decoder_tgt)**0.5
         else:
-            decoder_src = tgt[:, 0, :].unsqueeze(1)
-            for di in range(1, tgt.size(1)) :
+            decoder_output = tgt[:, 0, :].unsqueeze(1)
+            for di in range(1, self.max_length) :
                 # Teacher forcing 미포함: 자신의 예측을 다음 입력으로 사용
                 decoder_tgt = tgt[:, di, :].unsqueeze(1)
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_src, decoder_hidden, encoder_output)
-                decoder_src = decoder_output
+                    decoder_output, decoder_hidden, encoder_output)
 
-                loss += criterion(decoder_output, decoder_tgt)
+                loss += criterion(decoder_output, decoder_tgt)**0.5
 
-
+        print(loss)
         loss.backward()
 
         encoder_optimizer.step()

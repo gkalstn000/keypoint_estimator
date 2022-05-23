@@ -36,8 +36,10 @@ if __name__ == "__main__":
 
     input_size = 2
     output_size = 2
-    hidden_size = 10
+    hidden_size = 4
     batch_size = 128
+    learning_rate = 0.005
+    n_iters = 100
 
     teacher_forcing_ratio = 0.5
 
@@ -55,7 +57,7 @@ if __name__ == "__main__":
                       device=device,
                       teacher_forcing_ratio=teacher_forcing_ratio)
 
-    trainer.trainIters(n_iters = 20,
+    trainer.trainIters(n_iters = n_iters,
                        print_every=1,
                        plot_every = 1,
                        dataloader=dataloader)

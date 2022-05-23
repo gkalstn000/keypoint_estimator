@@ -23,10 +23,13 @@ class AttnDecoderRNN(nn.Module):
         # hidden size : (1, B, hidden)
         # embedded size : (B, 1, hidden)
 
-        embedded = self.embedding(input) # (B, 1, hidden)
+        embedded = self.embedding(input) # (1, 1, 5)
         # embedded = self.dropout(embedded)
         output, hidden = self.gru(embedded, hidden)
-
+        # 잘못썼음. GRU cell을 써야함. 하나씩 넣을 때는 cell을 써야함.
+        # output으로 attention 구하는게 맞는지 확인
+        # 사실은 RNN 한칸으로 계속 쓰고있엇던거임
+        # 같은값나오는거보면 이거뿐만이아니고 다른것도 잘못되었을꺼임
         attention_scores = encoder_outputs @ output.transpose(2, 1)
         attention_weight = F.softmax(attention_scores, dim=1)
         attention_value = encoder_outputs * attention_weight

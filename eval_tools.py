@@ -46,6 +46,8 @@ class Evaler :
             self.print_points(src, tgt, output_point, key_point_name)
 
     def evaluate(self, point):
+        self.encoder.eval()
+        self.decoder.eval()
         with torch.no_grad():
             point = torch.from_numpy(point).float()
             encoder_hidden = self.encoder.initHidden()
@@ -57,12 +59,11 @@ class Evaler :
             decoded_outputs = []
             decoder_attentions = torch.zeros(self.max_length, self.max_length)
 
-            decoder_input = point[0][None, None, :]
+            decoder_output = point[0][None, None, :]
             for di in range(1, self.max_length):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_input, decoder_hidden, encoder_output)
+                    decoder_output, decoder_hidden, encoder_output)
                 decoder_attentions[di-1] = decoder_attention
-                decoder_input = decoder_output
                 decoded_outputs.append(decoder_output)
 
             return torch.cat(decoded_outputs, 0).squeeze(), decoder_attentions
