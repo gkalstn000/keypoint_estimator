@@ -1,60 +1,102 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+import torch.utils.data as Data
 
-class EncoderRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, device):
-        # input_size : 2
-        # hidden_size : 10
-        super(EncoderRNN, self).__init__()
-        self.hidden_size = hidden_size
-        self.gru = nn.GRU(input_size, hidden_size, batch_first= True)
+from data.mydata import MyDataSet
+
+class Bidirectional_LSTM(nn.Module):
+    def __init__(self,
+                 input_dim,
+                 output_dim,
+                 embedding_dim,
+                 h_grid,
+                 w_grid,
+                 hidden_dim,
+                 n_layers,
+                 bidirectional,
+                 dropout,
+                 device):
+        super(Bidirectional_LSTM, self).__init__()
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.embedding_dim = embedding_dim
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+        self.bidirectional = bidirectional
         self.device = device
 
-    def forward(self, input, hidden):
-        # input size : (N, L, H_in) or (L, H_in)
-        if len(input.size()) == 2 :
-            input = input.unsqueeze(0) # (N, L, H_in)
-        output, hidden = self.gru(input, hidden)
-        return output, hidden
+        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim)
+        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim)
 
-    def initHidden(self, batch_size = 1):
-        return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
+        self.rnn = nn.LSTM(self.embedding_dim * 2 + 1,
+                           self.hidden_dim,
+                           num_layers=n_layers,
+                           bidirectional=bidirectional,
+                           batch_first=True)
+        # self.gru = nn.GRU(input_dim, hidden_dim, batch_first= True)
+        self.fc = nn.Linear(self.hidden_dim * 2 if self.bidirectional else self.hidden_dim,
+                            self.output_dim)
+        self.dropout = nn.Dropout(dropout)
 
-class DecoderRNN(nn.Module):
-    def __init__(self, hidden_size, output_size, device):
-        # hidden_size : 10
-        # output_size : 2
-        super(DecoderRNN, self).__init__()
-        self.hidden_size = hidden_size
-        self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True)
-        self.out = nn.Linear(hidden_size, output_size)
-        self.softmax = nn.LogSoftmax(dim=1)
-        self.device = device
+    def forward(self, input, grid_size_tensor):
+        if len(input.size()) != 3 :
+            input = input.unsqueeze(0)
+        grid_embedding_index = torch.div(input[:, :, :-1] + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
+        h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
+        w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
+        output = torch.cat([h_embedding, w_embedding, input[:, :, 2].unsqueeze(2)], dim = 2)
 
-    def forward(self, input, hidden):
-        output = F.relu(input)
-        output, hidden = self.gru(output, hidden)
-        output = self.softmax(self.out(output[0]))
-        return output, hidden
+        output, (hidden, cell) = self.rnn(output)
 
-    def initHidden(self, batch_size = 1):
-        return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
+        output = self.fc(self.dropout(output))
+        return output
+
+
 
 import utils
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == '__main__' :
+    height = 256
+    width = 256
+    h_grid = 100
+    w_grid = 100
+
+    # model params
+    input_dim = 3
+    output_dim = 2
+    embedding_dim = 3
+    h_grid_size = 2 / h_grid
+    w_grid_size = 2 / w_grid
+    hidden_dim = 5
+    n_layers = 3
+    bidirectional = True
+    dropout = 0.1
+
+    # training params
+    batch_size = 10
+    learning_rate = 0.005
+    n_iters = 100
+
     data_path = 'dataset/train/pose_label.pkl'
-    data = utils.load_train_data(data_path)
+    data_dict = utils.load_train_data(data_path)
+    mydata = MyDataSet(data_dict, height, width)
 
-    key_points = data['fasionWOMENDressesid0000041606_7additional']
+    dataloader = Data.DataLoader(mydata, batch_size, True)
 
-    input_ = torch.Tensor(key_points)
+    lstm = Bidirectional_LSTM(input_dim=input_dim,
+                      output_dim=output_dim,
+                      embedding_dim=embedding_dim,
+                      h_grid=h_grid,
+                      w_grid=w_grid,
+                      hidden_dim=hidden_dim,
+                      n_layers=n_layers,
+                      bidirectional=bidirectional,
+                      dropout=dropout,
+                      device=device)
 
-    encoder = EncoderRNN(2, 10, device)
-    encoder_hidden = encoder.initHidden()
-    output, hidden = encoder(input_, encoder_hidden)
+    grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
+    for src, tgt, mid_point, length in dataloader :
+        src, tgt = src.float(), tgt.float()
+        lstm(src, grid_size_tensor)
 
-    decoder = DecoderRNN(10, 2, device)
-    decoder_hidden = decoder.initHidden()
-    output, hidden = decoder(output, decoder_hidden)

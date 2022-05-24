@@ -17,20 +17,16 @@ def showPlot(points):
     plt.plot(points)
 class Evaler :
     def __init__(self,
-                 encoder,
-                 decoder,
-                 max_length,
+                 model,
+                 grid_size_tensor,
                  dataloader,
                  device):
-        self.encoder = encoder
-        self.decoder = decoder
-        self.max_length = max_length
+        self.model = model
+        self.grid_size_tensor = grid_size_tensor
         self.device = device
         self.dataloader = dataloader
 
     def print_points(self, src, tgt, pred, key_point_name):
-        src = src[:-1]
-        tgt = tgt[1:]
         pred = pred.numpy()
         strFormat = '%-12s%-12s%-12s%-12s\n'
         strOut = strFormat % ('Name', 'Source', 'Target', 'Pred')
@@ -41,64 +37,72 @@ class Evaler :
         key_point_name = ['Nose', 'Neck', 'R_shoulder', 'R_elbow', 'R_wrist', 'L_shoulder', 'L_elbow', 'L_wrist',
                           'R_pelvis', 'R_knee', 'R_ankle', 'L_pelvis', 'L_knee', 'L_ankle','R_eye', 'L_eye', 'R_ear', 'L_ear']
         for i in range(n):
-            src, tgt = random.choice(self.dataloader.dataset)
-            output_point, attentions = self.evaluate(point=src)
-            self.print_points(src, tgt, output_point, key_point_name)
+            src, tgt, mid_point, length = random.choice(self.dataloader.dataset)
+            pred = self.evaluate(point=src)
+            src_denorm = self.denormalization(src[:, :-1], 128, 256)
+            self.print_points(src_denorm, tgt, pred, key_point_name)
+
 
     def evaluate(self, point):
-        self.encoder.eval()
-        self.decoder.eval()
+        self.model.eval()
         with torch.no_grad():
             point = torch.from_numpy(point).float()
-            encoder_hidden = self.encoder.initHidden()
+            pred = self.model(point, self.grid_size_tensor)
+            return pred.squeeze()
 
-            encoder_output, encoder_hidden = self.encoder(point, encoder_hidden)
+    def denormalization(self, points, mid_point, length):
+        max_point = np.array([256, 256])
+        unknown = np.array([-1, -1])
+        up_scale = (points * length) / 2 + mid_point
 
-            decoder_hidden = encoder_hidden
-
-            decoded_outputs = []
-            decoder_attentions = torch.zeros(self.max_length, self.max_length)
-
-            decoder_output = point[0][None, None, :]
-            for di in range(1, self.max_length):
-                decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_output, decoder_hidden, encoder_output)
-                decoder_attentions[di-1] = decoder_attention
-                decoded_outputs.append(decoder_output)
-
-            return torch.cat(decoded_outputs, 0).squeeze(), decoder_attentions
-
+        return np.where(up_scale > max_point, unknown, up_scale)
 
 from data.mydata import MyDataSet
 import torch.utils.data as Data
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-from models.encoder import EncoderRNN, DecoderRNN
-from models.network import AttnDecoderRNN
+from models.encoder import Bidirectional_LSTM
 if __name__ == '__main__' :
-    MAX_LENGTH = 19
-
     height = 256
     width = 256
+    h_grid = 100
+    w_grid = 100
 
-    input_size = 2
-    output_size = 2
-    hidden_size = 10
-    batch_size = 128
+    # model params
+    input_dim = 3
+    output_dim = 2
+    embedding_dim = 3
+    h_grid_size = 2 / h_grid
+    w_grid_size = 2 / w_grid
+    hidden_dim = 5
+    n_layers = 3
+    bidirectional = True
+    dropout = 0.5
 
-    teacher_forcing_ratio = 0.5
+    # training params
+    batch_size = 64
+    learning_rate = 0.005
+    n_epochs = 100
 
     data_path = 'dataset/train/pose_label.pkl'
     data_dict = utils.load_train_data(data_path)
     mydata = MyDataSet(data_dict, height, width)
 
     dataloader = Data.DataLoader(mydata, batch_size, True)
+    grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
 
-    encoder1 = EncoderRNN(input_size, hidden_size, device).to(device)
-    attn_decoder1 = AttnDecoderRNN(hidden_size, output_size, MAX_LENGTH, device, dropout_p=0.1).to(device)
+    lstm = Bidirectional_LSTM(input_dim=input_dim,
+                              output_dim=output_dim,
+                              embedding_dim=embedding_dim,
+                              h_grid=h_grid,
+                              w_grid=w_grid,
+                              hidden_dim=hidden_dim,
+                              n_layers=n_layers,
+                              bidirectional=bidirectional,
+                              dropout=dropout,
+                              device=device)
 
-    eval = Evaler(encoder=encoder1,
-                  decoder=attn_decoder1,
-                  max_length=MAX_LENGTH,
+    eval = Evaler(model=lstm,
+                  grid_size_tensor=grid_size_tensor,
                   dataloader=dataloader,
                   device=device)
 

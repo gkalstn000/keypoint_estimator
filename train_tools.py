@@ -2,6 +2,7 @@ import torch
 import random
 import time
 import math
+import time
 
 import torch.nn as nn
 from torch import optim
@@ -11,58 +12,53 @@ import eval_tools
 from tqdm import tqdm, trange
 class Trainer :
     def __init__(self,
-                 encoder,
-                 decoder,
-                 max_length,
-                 device,
-                 teacher_forcing_ratio):
-        self.encoder = encoder
-        self.decoder = decoder
-        self.max_length = max_length
+                 model,
+                 grid_size_tensor,
+                 device):
+        self.model = model
+        self.grid_size_tensor = grid_size_tensor
         self.device = device
-        self.teacher_forcing_ratio = teacher_forcing_ratio
+
     def trainIters(self,
-                   n_iters,
+                   n_epochs,
                    dataloader,
-                   print_every=1000,
-                   plot_every=100,
-                   learning_rate=0.0005):
+                   print_every=2,
+                   plot_every=5,
+                   learning_rate=0.005):
         start = time.time()
         plot_losses = []
         print_loss_total = 0  # print_every 마다 초기화
         plot_loss_total = 0  # plot_every 마다 초기화
 
-        encoder_optimizer = optim.SGD(self.encoder.parameters(), lr=learning_rate)
-        decoder_optimizer = optim.SGD(self.decoder.parameters(), lr=learning_rate)
+        model_optimizer = optim.SGD(self.model.parameters(), lr=learning_rate)
 
         criterion = nn.MSELoss()
 
         # 여기 batch 단위로 받도록 수정해야겠음.
 
-        for iter in trange(n_iters) :
-            iter += 1
-            for src, tgt in dataloader:
-                self.encoder.train()
-                self.decoder.train()
+        for epoch in trange(1, n_epochs+1) :
+            for src, tgt, mid_point, length in tqdm(dataloader):
+                self.model.train()
                 src, tgt = src.float(), tgt.float()
 
-                loss = self.train(src,
-                             tgt,
-                             encoder_optimizer,
-                             decoder_optimizer,
-                             criterion
-                             )
 
+                loss = self.train(src,
+                                  tgt,
+                                  model_optimizer,
+                                  criterion)
+
+
+                # print(loss)
                 print_loss_total += loss
                 plot_loss_total += loss
 
-            if iter % print_every == 0:
+            if epoch % print_every == 0:
                 print_loss_avg = print_loss_total / print_every
                 print_loss_total = 0
-                print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
-                                             iter, iter / n_iters * 100, print_loss_avg))
+                print('%s (%d %d%%) %.4f' % (timeSince(start, epoch / n_epochs),
+                                             epoch, epoch / n_epochs * 100, print_loss_avg))
 
-            if iter % plot_every == 0:
+            if epoch % plot_every == 0:
                 plot_loss_avg = plot_loss_total / plot_every
                 plot_losses.append(plot_loss_avg)
                 plot_loss_total = 0
@@ -72,48 +68,25 @@ class Trainer :
     def train(self,
               src,
               tgt,
-              encoder_optimizer,
-              decoder_optimizer,
+              model_optimizer,
               criterion):
         batch_size = len(src)
-        encoder_hidden = self.encoder.initHidden(batch_size)
-
-        encoder_optimizer.zero_grad()
-        decoder_optimizer.zero_grad()
+        model_optimizer.zero_grad()
 
         loss = 0
-
-        encoder_output, encoder_hidden = self.encoder(src, encoder_hidden)
-
-        # decoder_input = torch.tensor([[self.SOS_token]], device=self.device)
-        decoder_hidden = encoder_hidden
-
-        # use_teacher_forcing = True if random.random() < self.teacher_forcing_ratio else False
-        use_teacher_forcing = True
-        if use_teacher_forcing:
-            for di in range(tgt.size(1)-1) :
-                decoder_src = tgt[:, di, :].unsqueeze(1)
-                decoder_tgt = tgt[:, di+1, :].unsqueeze(1)
-                decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_src, decoder_hidden, encoder_output)
-                # loss += torch.log(criterion(decoder_output, decoder_tgt))
-                loss += criterion(decoder_output, decoder_tgt)**0.5
-        else:
-            decoder_output = tgt[:, 0, :].unsqueeze(1)
-            for di in range(1, self.max_length) :
-                # Teacher forcing 미포함: 자신의 예측을 다음 입력으로 사용
-                decoder_tgt = tgt[:, di, :].unsqueeze(1)
-                decoder_output, decoder_hidden, decoder_attention = self.decoder(
-                    decoder_output, decoder_hidden, encoder_output)
-
-                loss += criterion(decoder_output, decoder_tgt)**0.5
-
-        print(loss)
+        start = time.time()
+        pred = self.model(src, self.grid_size_tensor)
+        end = time.time()
+        print(f"forward : {end - start:.5f} sec")
+        loss += criterion(tgt, pred)
+        start = time.time()
         loss.backward()
-
-        encoder_optimizer.step()
-        decoder_optimizer.step()
-
+        end = time.time()
+        print(f"backward : {end - start:.5f} sec")
+        start = time.time()
+        model_optimizer.step()
+        end = time.time()
+        print(f"step : {end - start:.5f} sec")
         return loss.item() / tgt.size(0)
 
 def asMinutes(s):

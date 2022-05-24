@@ -26,13 +26,13 @@ class MyDataSet(Data.Dataset):
         tgt = scaling - moving.transpose(0, 2, 1)  # (B, L, 2)
 
         # Normalization을 위한 values
-        max_point = np.array([[256, 256]]) @ R_inv - moving.transpose(0, 2, 1)
-        min_point = -moving.transpose(0, 2, 1)
+        max_point = np.array([[self.height, self.width]])
+        min_point = np.array([[0, 0]])
         mid_point = (max_point + min_point) / 2
         length = max_point - min_point
 
-        cond1 = tgt > np.array([self.height, self.width])
-        cond2 = tgt < np.array([0, 0])
+        cond1 = tgt > max_point.squeeze()
+        cond2 = tgt < min_point.squeeze()
 
         cond1_logical = np.logical_or(cond1[:, :, 0], cond1[:, :, 1])
         cond2_logical = np.logical_or(cond2[:, :, 0], cond2[:, :, 1])
@@ -42,9 +42,10 @@ class MyDataSet(Data.Dataset):
         unknown_token = np.expand_dims(unknown_index, axis = 2)
 
         src = tgt.copy()
+        src[unknown_index] = np.array([self.height + 1, self.width + 1])
         src_norm = (src-mid_point) * 2 / length
         src_norm_with_unknown = np.concatenate((src_norm, unknown_token), axis = 2)
-        return  src_norm_with_unknown[idx], tgt[idx], mid_point[idx], length[idx]
+        return  src_norm_with_unknown[idx], tgt[idx], mid_point, length
 
 
     def affine_matrix_batch(self):
