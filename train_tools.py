@@ -23,24 +23,24 @@ class Trainer :
 
     def trainIters(self,
                    opt,
+                   model_optimizer,
                    dataloader):
         n_epochs = opt.n_epochs
         print_every = opt.print_every
         plot_every = opt.plot_every
-        learning_rate = opt.learning_rate
 
         start = time.time()
         plot_losses = []
         print_loss_total = 0  # print_every 마다 초기화
         plot_loss_total = 0  # plot_every 마다 초기화
 
-        model_optimizer = optim.SGD(self.model.parameters(), lr=learning_rate)
+
 
         criterion = nn.MSELoss()
 
         # 여기 batch 단위로 받도록 수정해야겠음.
 
-        for epoch in trange(1, n_epochs+1) :
+        for epoch in trange(opt.epoch, n_epochs+1) :
             for src, tgt, mid_point, length in tqdm(dataloader):
                 self.model.train()
                 src, tgt = src.float(), tgt.float()
@@ -52,20 +52,24 @@ class Trainer :
                                   criterion)
 
 
-                print(loss)
+                print(print_loss_total / epoch)
                 print_loss_total += loss
                 plot_loss_total += loss
 
-            if epoch % print_every == 0:
-                print_loss_avg = print_loss_total / print_every
+            if epoch % opt.print_every == 0:
+                print_loss_avg = print_loss_total / opt.print_every
                 print_loss_total = 0
                 print('%s (%d %d%%) %.4f' % (timeSince(start, epoch / n_epochs),
                                              epoch, epoch / n_epochs * 100, print_loss_avg))
 
-            if epoch % plot_every == 0:
-                plot_loss_avg = plot_loss_total / plot_every
+            if epoch % opt.plot_every == 0:
+                plot_loss_avg = plot_loss_total / opt.plot_every
                 plot_losses.append(plot_loss_avg)
                 plot_loss_total = 0
+
+            if epoch %  opt.save_epoch :
+                file_name = f'model_params_{epoch}_epoch'
+                utils.save_model(opt, epoch, self.model, model_optimizer, print_loss_avg, file_name)
 
         eval_tools.showPlot(plot_losses)
 
@@ -78,19 +82,10 @@ class Trainer :
         model_optimizer.zero_grad()
 
         loss = 0
-        # start = time.time()
         pred = self.model(src, self.grid_size_tensor)
-        # end = time.time()
-        # print(f"forward : {end - start:.5f} sec")
         loss += criterion(tgt, pred)
-        # start = time.time()
         loss.backward()
-        # end = time.time()
-        # print(f"backward : {end - start:.5f} sec")
-        # start = time.time()
         model_optimizer.step()
-        # end = time.time()
-        # print(f"step : {end - start:.5f} sec")
         return loss.item() / tgt.size(0)
 
 def asMinutes(s):

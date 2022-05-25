@@ -20,6 +20,8 @@ class Bidirectional_LSTM_option(object):
         parser = self.parser
         # path params
         parser.add_argument('--id', type=str, default='default', help='experiment ID. the experiment dir will be set as "./checkpoint/id/"')
+        parser.add_argument('--model_name', type=str, default='model_param_latest', help='load model params with file name')
+
         # input params
         parser.add_argument('--height', type=int, default=256, help='height of image')
         parser.add_argument('--width', type=int, default=256, help='width of image')

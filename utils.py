@@ -33,24 +33,47 @@ def load_test_data(data_path) :
     return test_X
 
 
-def save_model(opt, model, file_name) :
+def save_model(opt, epoch, model, optimizer, loss, file_name) :
     id = opt.id
     root = 'checkpoints'
-    latest_file_name = 'model_param_latest.pt'
+    latest_file_name = 'model_param_latest'
+
     file_path = os.path.join(root, id, file_name)
     latest_file_path = os.path.join(root, id, latest_file_name)
 
-def load_model(opt, model) :
+    print('saveing model')
+    print(f"""epoch : {epoch}
+    loss : {loss}
+    model_state_dict
+    optimizer_state_dict
+    """)
+    torch.save({'epoch' : epoch,
+                'model_state_dict' : model.cpu().state_dict(),
+                'optimizer_state_dict' : optimizer.state_dict(),
+                'loss' : loss}, file_path)
+
+    torch.save({'epoch': epoch,
+                'model_state_dict': model.cpu().state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss}, latest_file_path)
+
+def load_model(opt, model, optimizer) :
     if not opt.continue_train :
-        return model
+        return model, optimizer, 1, 0
     id = opt.id
     root = 'checkpoints'
-    file_name = 'model_param_latest.pt'
-    file_path = os.path.join(root, id, file_name)
+    file_path = os.path.join(root, id, opt.model_name)
     assert os.path.isfile(file_path), f'there is no {file_path}'
 
-    model = torch.load(file_path)
-    return model
+    print(f'Load model, optimizer, epoch, loss from {file_path}')
+
+    checkpoint = torch.load(file_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    epoch = checkpoint['epoch']
+    loss = checkpoint['loss']
+
+    return model, optimizer, epoch, loss
 
 
 
