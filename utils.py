@@ -3,6 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 import json
 import torch
+import os
 
 def load_train_data(data_path) :
     '''
@@ -32,23 +33,24 @@ def load_test_data(data_path) :
     return test_X
 
 
-#=================== 밑에는 doc code ========================
+def save_model(opt, model, file_name) :
+    id = opt.id
+    root = 'checkpoints'
+    latest_file_name = 'model_param_latest.pt'
+    file_path = os.path.join(root, id, file_name)
+    latest_file_path = os.path.join(root, id, latest_file_name)
 
+def load_model(opt, model) :
+    if not opt.continue_train :
+        return model
+    id = opt.id
+    root = 'checkpoints'
+    file_name = 'model_param_latest.pt'
+    file_path = os.path.join(root, id, file_name)
+    assert os.path.isfile(file_path), f'there is no {file_path}'
 
-def indexesFromSentence(lang, sentence):
-    return [lang.word2index[word] for word in sentence.split(' ')]
-
-def tensorFromSentence(lang, sentence, EOS_token, device):
-    indexes = indexesFromSentence(lang, sentence)
-    indexes.append(EOS_token)
-    return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
-
-def tensorsFromPair(pair, input_lang, output_lang, EOS_token, device):
-    input_tensor = tensorFromSentence(input_lang, pair[0], EOS_token, device)
-    target_tensor = tensorFromSentence(output_lang, pair[1], EOS_token, device)
-    return (input_tensor, target_tensor)
-
-
+    model = torch.load(file_path)
+    return model
 
 
 

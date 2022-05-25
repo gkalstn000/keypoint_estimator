@@ -60,7 +60,7 @@ class Evaler :
 from data.mydata import MyDataSet
 import torch.utils.data as Data
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-from models.encoder import Bidirectional_LSTM
+from models.bidirectional_lstm import Bidirectional_LSTM
 if __name__ == '__main__' :
     height = 256
     width = 256

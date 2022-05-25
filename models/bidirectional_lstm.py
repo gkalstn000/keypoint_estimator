@@ -6,38 +6,28 @@ import torch.utils.data as Data
 from data.mydata import MyDataSet
 
 class Bidirectional_LSTM(nn.Module):
-    def __init__(self,
-                 input_dim,
-                 output_dim,
-                 embedding_dim,
-                 h_grid,
-                 w_grid,
-                 hidden_dim,
-                 n_layers,
-                 bidirectional,
-                 dropout,
-                 device):
+    def __init__(self, opt, device):
         super(Bidirectional_LSTM, self).__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.embedding_dim = embedding_dim
-        self.hidden_dim = hidden_dim
-        self.n_layers = n_layers
-        self.bidirectional = bidirectional
+        self.input_dim = opt.input_dim
+        self.output_dim = opt.output_dim
+        self.embedding_dim = opt.embedding_dim
+        self.hidden_dim = opt.hidden_dim
+        self.n_layers = opt.n_layers
+        self.bidirectional = opt.bidirectional
         self.device = device
 
-        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim)
-        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim)
+        self.h_embedding = nn.Embedding(opt.h_grid+1, self.embedding_dim)
+        self.w_embedding = nn.Embedding(opt.w_grid+1, self.embedding_dim)
 
         self.rnn = nn.LSTM(self.embedding_dim * 2 + 1,
                            self.hidden_dim,
-                           num_layers=n_layers,
-                           bidirectional=bidirectional,
+                           num_layers=opt.n_layers,
+                           bidirectional=self.bidirectional,
                            batch_first=True)
         # self.gru = nn.GRU(input_dim, hidden_dim, batch_first= True)
         self.fc = nn.Linear(self.hidden_dim * 2 if self.bidirectional else self.hidden_dim,
                             self.output_dim)
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(opt.dropout)
 
     def forward(self, input, grid_size_tensor):
         if len(input.size()) != 3 :

@@ -8,11 +8,11 @@ import torch
 
 
 class MyDataSet(Data.Dataset):
-    def __init__(self, data_dict, height, width):
+    def __init__(self, data_dict, opt):
         self.file_name = list(data_dict.keys())
         self.key_points = np.array(list(data_dict.values()))
-        self.height = height
-        self.width = width
+        self.height = opt.height
+        self.width = opt.width
 
 
     def __len__(self):

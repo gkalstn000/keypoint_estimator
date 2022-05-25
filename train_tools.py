@@ -12,19 +12,23 @@ import eval_tools
 from tqdm import tqdm, trange
 class Trainer :
     def __init__(self,
+                 opt,
                  model,
                  grid_size_tensor,
                  device):
+        self.opt = opt
         self.model = model
         self.grid_size_tensor = grid_size_tensor
         self.device = device
 
     def trainIters(self,
-                   n_epochs,
-                   dataloader,
-                   print_every=2,
-                   plot_every=5,
-                   learning_rate=0.005):
+                   opt,
+                   dataloader):
+        n_epochs = opt.n_epochs
+        print_every = opt.print_every
+        plot_every = opt.plot_every
+        learning_rate = opt.learning_rate
+
         start = time.time()
         plot_losses = []
         print_loss_total = 0  # print_every 마다 초기화
@@ -48,7 +52,7 @@ class Trainer :
                                   criterion)
 
 
-                # print(loss)
+                print(loss)
                 print_loss_total += loss
                 plot_loss_total += loss
 
@@ -74,19 +78,19 @@ class Trainer :
         model_optimizer.zero_grad()
 
         loss = 0
-        start = time.time()
+        # start = time.time()
         pred = self.model(src, self.grid_size_tensor)
-        end = time.time()
-        print(f"forward : {end - start:.5f} sec")
+        # end = time.time()
+        # print(f"forward : {end - start:.5f} sec")
         loss += criterion(tgt, pred)
-        start = time.time()
+        # start = time.time()
         loss.backward()
-        end = time.time()
-        print(f"backward : {end - start:.5f} sec")
-        start = time.time()
+        # end = time.time()
+        # print(f"backward : {end - start:.5f} sec")
+        # start = time.time()
         model_optimizer.step()
-        end = time.time()
-        print(f"step : {end - start:.5f} sec")
+        # end = time.time()
+        # print(f"step : {end - start:.5f} sec")
         return loss.item() / tgt.size(0)
 
 def asMinutes(s):
