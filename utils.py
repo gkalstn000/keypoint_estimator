@@ -42,7 +42,8 @@ def save_model(opt, epoch, model, optimizer, loss, file_name) :
     latest_file_path = os.path.join(root, id, latest_file_name)
 
     print('saveing model')
-    print(f"""epoch : {epoch}
+    print(f"""
+    epoch : {epoch}
     loss : {loss}
     model_state_dict
     optimizer_state_dict

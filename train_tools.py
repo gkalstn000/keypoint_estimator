@@ -25,14 +25,10 @@ class Trainer :
                    opt,
                    model_optimizer,
                    dataloader):
-        n_epochs = opt.n_epochs
-        print_every = opt.print_every
-        plot_every = opt.plot_every
 
         start = time.time()
         plot_losses = []
-        print_loss_total = 0  # print_every 마다 초기화
-        plot_loss_total = 0  # plot_every 마다 초기화
+        loss_total = 0  # print_every 마다 초기화
 
 
 
@@ -40,7 +36,7 @@ class Trainer :
 
         # 여기 batch 단위로 받도록 수정해야겠음.
 
-        for epoch in trange(opt.epoch, n_epochs+1) :
+        for epoch in trange(opt.epoch, opt.n_epochs+1) :
             for src, tgt, mid_point, length in tqdm(dataloader):
                 self.model.train()
                 src, tgt = src.float(), tgt.float()
@@ -50,26 +46,20 @@ class Trainer :
                                   tgt,
                                   model_optimizer,
                                   criterion)
-
-
-                print(print_loss_total / epoch)
-                print_loss_total += loss
-                plot_loss_total += loss
+                loss_total += loss
 
             if epoch % opt.print_every == 0:
-                print_loss_avg = print_loss_total / opt.print_every
-                print_loss_total = 0
-                print('%s (%d %d%%) %.4f' % (timeSince(start, epoch / n_epochs),
-                                             epoch, epoch / n_epochs * 100, print_loss_avg))
+                print_loss_avg = loss_total / epoch
+                print('%s (%d %d%%) %.4f' % (timeSince(start, epoch / opt.n_epochs),
+                                             epoch, epoch / opt.n_epochs * 100, print_loss_avg))
 
             if epoch % opt.plot_every == 0:
-                plot_loss_avg = plot_loss_total / opt.plot_every
+                plot_loss_avg = loss_total / epoch
                 plot_losses.append(plot_loss_avg)
-                plot_loss_total = 0
 
-            if epoch %  opt.save_epoch :
+            if epoch % opt.save_epoch == 0 :
                 file_name = f'model_params_{epoch}_epoch'
-                utils.save_model(opt, epoch, self.model, model_optimizer, print_loss_avg, file_name)
+                utils.save_model(opt, epoch, self.model, model_optimizer, loss_total / epoch, file_name)
 
         eval_tools.showPlot(plot_losses)
 

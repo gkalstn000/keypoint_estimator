@@ -14,7 +14,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 import utils
-from data.mydata import MyDataSet
+from data.mydata import MyDataSet, Make_batch
 from models.bidirectional_lstm import Bidirectional_LSTM
 from train_tools import Trainer
 from eval_tools import Evaler
@@ -36,7 +36,8 @@ if __name__ == "__main__":
 
     data_path = 'dataset/train/pose_label.pkl'
     data_dict = utils.load_train_data(data_path)
-    mydata = MyDataSet(data_dict, opt)
+    src_norm_with_unknown, tgt, mid_point, length = Make_batch(data_dict, opt).get_batch()
+    mydata = MyDataSet(src_norm_with_unknown, tgt, mid_point, length)
 
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])

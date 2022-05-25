@@ -6,19 +6,26 @@ import matplotlib.pyplot as plt
 import torch.utils.data as Data
 import torch
 
+class MyDataSet(Data.Dataset) :
+    def __init__(self, src_norm_with_unknown, tgt, mid_point, length):
+        self.src_norm_with_unknown = src_norm_with_unknown
+        self.tgt = tgt
+        self.mid_point = mid_point
+        self.length = length
 
-class MyDataSet(Data.Dataset):
+    def __len__(self):
+        return self.tgt.shape[0]
+    def __getitem__(self, idx):
+        return self.src_norm_with_unknown[idx], self.tgt[idx], self.mid_point, self.length
+
+class Make_batch:
     def __init__(self, data_dict, opt):
         self.file_name = list(data_dict.keys())
         self.key_points = np.array(list(data_dict.values()))
         self.height = opt.height
         self.width = opt.width
 
-
-    def __len__(self):
-        return len(self.file_name)
-
-    def __getitem__(self, idx):
+    def get_batch(self):
         R, R_inv, T = self.affine_matrix_batch()
 
         scaling = self.key_points @ R_inv
@@ -45,7 +52,7 @@ class MyDataSet(Data.Dataset):
         src[unknown_index] = np.array([self.height + 1, self.width + 1])
         src_norm = (src-mid_point) * 2 / length
         src_norm_with_unknown = np.concatenate((src_norm, unknown_token), axis = 2)
-        return  src_norm_with_unknown[idx], tgt[idx], mid_point, length
+        return src_norm_with_unknown, tgt, mid_point, length
 
 
     def affine_matrix_batch(self):
