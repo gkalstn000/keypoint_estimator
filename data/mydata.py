@@ -92,29 +92,7 @@ class Make_batch:
 
         return R, R_inv, T
 
-def plot_key_points(src, tgt) :
-    skeleton_tree = [[16, 14], [14, 0], [15, 0], [17, 15], [0, 1],
-                     [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7],
-                     [1, 8], [8, 9], [9, 10], [1, 11], [11, 12], [12, 13]]
 
-    if type(src) != np.ndarray:
-        src.numpy()
-        tgt.numpy()
-
-    invalid = np.array([-1.0, -1.0])
-    # tgt drawing
-    for p1, p2 in skeleton_tree:
-        h1, w1 = tgt[p1]
-        h2, w2 = tgt[p2]
-        plt.plot([h1, h2], [w1, w2], color='red')
-    # src drawing
-    for p1, p2 in skeleton_tree:
-        if (src[p1] == invalid).sum() > 0 or (src[p2] == invalid).sum() > 0: continue
-        h1, w1 = src[p1]
-        h2, w2 = src[p2]
-        plt.plot([h1, h2], [w1, w2], color='green')
-
-    plt.show()
 
 def denormalization(points, mid_point, length) :
     return (points * length) / 2 + mid_point

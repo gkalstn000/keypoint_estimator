@@ -4,6 +4,9 @@ import pandas as pd
 import json
 import torch
 import os
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def load_train_data(data_path) :
     '''
@@ -33,7 +36,7 @@ def load_test_data(data_path) :
     return test_X
 
 
-def save_model(opt, epoch, model, optimizer, loss, file_name) :
+def save_model(opt, epoch, model, optimizer, scheduler, loss, file_name) :
     id = opt.id
     root = 'checkpoints'
     latest_file_name = 'model_param_latest'
@@ -44,23 +47,25 @@ def save_model(opt, epoch, model, optimizer, loss, file_name) :
     print('saveing model')
     print(f"""
     epoch : {epoch}
-    loss : {loss}
+    loss : {loss / epoch}
     model_state_dict
     optimizer_state_dict
     """)
     torch.save({'epoch' : epoch,
                 'model_state_dict' : model.cpu().state_dict(),
                 'optimizer_state_dict' : optimizer.state_dict(),
+                'scheduler' : scheduler.state_dict(),
                 'loss' : loss}, file_path)
 
     torch.save({'epoch': epoch,
                 'model_state_dict': model.cpu().state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict(),
                 'loss': loss}, latest_file_path)
 
-def load_model(opt, model, optimizer) :
+def load_model(opt, model, optimizer, scheduler) :
     if not opt.continue_train :
-        return model, optimizer, 1, 0
+        return model, optimizer, scheduler, 1, 0
     id = opt.id
     root = 'checkpoints'
     file_path = os.path.join(root, id, opt.model_name)
@@ -71,12 +76,43 @@ def load_model(opt, model, optimizer) :
     checkpoint = torch.load(file_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    scheduler.load_state_dict(checkpoint['scheduler'])
+
     epoch = checkpoint['epoch']
     loss = checkpoint['loss']
 
-    return model, optimizer, epoch, loss
+    return model, optimizer, scheduler, epoch, loss
+
+def plot_key_points(src, tgt, pred, path) :
+    skeleton_tree = [[16, 14], [14, 0], [15, 0], [17, 15], [0, 1],
+                     [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7],
+                     [1, 8], [8, 9], [9, 10], [1, 11], [11, 12], [12, 13]]
+
+    if type(pred) != np.ndarray or type(src) != np.ndarray:
+        src.numpy()
+        tgt.numpy()
+        pred.numpy()
 
 
+    # tgt drawing
+    for p1, p2 in skeleton_tree:
+        h1, w1 = tgt[p1]
+        h2, w2 = tgt[p2]
+        plt.plot([h1, h2], [w1, w2], color='crimson')
+    # pred drawing
+    for p1, p2 in skeleton_tree:
+        h1, w1 = pred[p1]
+        h2, w2 = pred[p2]
+        plt.plot([h1, h2], [w1, w2], color='green')
+
+    for (h_s, w_s), (h, w) in zip(src, tgt) :
+        if h_s != -1 and w_s != -1 :
+            plt.scatter(h, w, c = 'g')
+        else :
+            plt.scatter(h, w, c = 'r')
+
+    plt.savefig(path)
+    plt.cla()
 
 
 if __name__ == "__main__":

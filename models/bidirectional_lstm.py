@@ -6,7 +6,7 @@ import torch.utils.data as Data
 from data.mydata import MyDataSet
 
 class Bidirectional_LSTM(nn.Module):
-    def __init__(self, opt, device):
+    def __init__(self, opt):
         super(Bidirectional_LSTM, self).__init__()
         self.input_dim = opt.input_dim
         self.output_dim = opt.output_dim
@@ -14,7 +14,7 @@ class Bidirectional_LSTM(nn.Module):
         self.hidden_dim = opt.hidden_dim
         self.n_layers = opt.n_layers
         self.bidirectional = opt.bidirectional
-        self.device = device
+        self.device = opt.device
 
         self.h_embedding = nn.Embedding(opt.h_grid+1, self.embedding_dim)
         self.w_embedding = nn.Embedding(opt.w_grid+1, self.embedding_dim)

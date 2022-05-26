@@ -30,17 +30,34 @@ class Evaler :
         pred = pred.numpy()
         strFormat = '%-12s%-12s%-12s%-12s\n'
         strOut = strFormat % ('Name', 'Source', 'Target', 'Pred')
-        for name, src_p, tgt_p, pred_ in zip(key_point_name, src.astype(np.int8), tgt.astype(np.int8), pred.astype(np.int8)) :
+        for name, src_p, tgt_p, pred_ in zip(key_point_name, src.astype(np.int64), tgt.astype(np.int64), pred.astype(np.int64)) :
             strOut += strFormat % (name, src_p, tgt_p, pred_)
         print(strOut)
-    def evaluateRandomly(self,n=10):
+    def evaluateRandomly(self, score, n=10):
         key_point_name = ['Nose', 'Neck', 'R_shoulder', 'R_elbow', 'R_wrist', 'L_shoulder', 'L_elbow', 'L_wrist',
                           'R_pelvis', 'R_knee', 'R_ankle', 'L_pelvis', 'L_knee', 'L_ankle','R_eye', 'L_eye', 'R_ear', 'L_ear']
+
+        srcs = []
+        tgts = []
+        preds = []
         for i in range(n):
             src, tgt, mid_point, length = random.choice(self.dataloader.dataset)
             pred = self.evaluate(point=src)
-            src_denorm = self.denormalization(src[:, :-1], 128, 256)
+            src_denorm = self.denormalization(src[:, :-1], mid_point, length)
             self.print_points(src_denorm, tgt, pred, key_point_name)
+
+            total_score, masked_score = score(src_denorm, tgt, pred)
+            print(f'total score : {total_score}')
+            print(f'masked score : {masked_score}')
+            print('-'*50)
+
+            srcs.append(src_denorm)
+            tgts.append(tgt)
+            preds.append(pred)
+
+        return np.stack(srcs, axis = 0), np.stack(tgts, axis = 0), np.stack(preds, axis = 0)
+
+
 
 
     def evaluate(self, point):
@@ -83,7 +100,7 @@ if __name__ == '__main__' :
     learning_rate = 0.005
     n_epochs = 100
 
-    data_path = 'dataset/train/pose_label.pkl'
+    data_path = '../dataset/train/pose_label.pkl'
     data_dict = utils.load_train_data(data_path)
     mydata = MyDataSet(data_dict, height, width)
 

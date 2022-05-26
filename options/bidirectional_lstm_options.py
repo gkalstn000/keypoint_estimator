@@ -37,14 +37,14 @@ class Bidirectional_LSTM_option(object):
         parser.add_argument('--dropout', type=float, default=0.5, help='dropout rate')
         # training params
         parser.add_argument('--mode', type=str, default='train', help='set mode [train/test]')
-        parser.add_argument('--batch_size', type=int, default=64, help='batch_size')
+        parser.add_argument('--batch_size', type=int, default=256, help='batch_size')
         parser.add_argument('--learning_rate', type=float, default=0.005, help='learning rate')
         parser.add_argument('--n_epochs', type=int, default=200, help='number of epoch')
         parser.add_argument('--continue_train', action='store_true', help='continue_training')
 
-        parser.add_argument('--save_epoch', type=int, default=20, help='model save epoch step')
-        parser.add_argument('--print_every', type=int, default=10, help='print loss epoch step')
-        parser.add_argument('--plot_every', type=int, default=10, help='plot loss epoch step')
+        parser.add_argument('--save_epoch', type=int, default=50, help='model save epoch step')
+        parser.add_argument('--print_every', type=int, default=50, help='print loss epoch step')
+        parser.add_argument('--plot_every', type=int, default=50, help='plot loss epoch step')
 
         self.initialized = True
 

@@ -1,15 +1,11 @@
-import torch
-import random
-import time
 import math
 import time
 
 import torch.nn as nn
-from torch import optim
 
 import utils
-import eval_tools
-from tqdm import tqdm, trange
+import tools.eval_tools as eval_tools
+from tqdm import trange
 class Trainer :
     def __init__(self,
                  opt,
@@ -24,11 +20,12 @@ class Trainer :
     def trainIters(self,
                    opt,
                    model_optimizer,
+                   scheduler,
                    dataloader):
 
         start = time.time()
         plot_losses = []
-        loss_total = 0  # print_every 마다 초기화
+        loss_total = opt.loss  # print_every 마다 초기화
 
 
 
@@ -37,16 +34,17 @@ class Trainer :
         # 여기 batch 단위로 받도록 수정해야겠음.
 
         for epoch in trange(opt.epoch, opt.n_epochs+1) :
-            for src, tgt, mid_point, length in tqdm(dataloader):
+            for src, tgt, mid_point, length in dataloader:
                 self.model.train()
                 src, tgt = src.float(), tgt.float()
 
+                model_optimizer.zero_grad()
+                loss = self.train(src, tgt, criterion)
+                loss_total += (loss.item() / tgt.size(0))
 
-                loss = self.train(src,
-                                  tgt,
-                                  model_optimizer,
-                                  criterion)
-                loss_total += loss
+                loss.backward()
+                model_optimizer.step()
+            scheduler.step(loss_total / epoch)
 
             if epoch % opt.print_every == 0:
                 print_loss_avg = loss_total / epoch
@@ -59,24 +57,19 @@ class Trainer :
 
             if epoch % opt.save_epoch == 0 :
                 file_name = f'model_params_{epoch}_epoch'
-                utils.save_model(opt, epoch, self.model, model_optimizer, loss_total / epoch, file_name)
+                utils.save_model(opt, epoch, self.model, model_optimizer, scheduler, loss_total, file_name)
 
         eval_tools.showPlot(plot_losses)
 
     def train(self,
               src,
               tgt,
-              model_optimizer,
               criterion):
-        batch_size = len(src)
-        model_optimizer.zero_grad()
 
-        loss = 0
         pred = self.model(src, self.grid_size_tensor)
-        loss += criterion(tgt, pred)
-        loss.backward()
-        model_optimizer.step()
-        return loss.item() / tgt.size(0)
+        loss = criterion(tgt, pred)
+
+        return loss
 
 def asMinutes(s):
     m = math.floor(s / 60)
