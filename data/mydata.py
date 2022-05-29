@@ -1,6 +1,8 @@
 import torch.utils.data as Data
-from numpy import random
 import numpy as np
+from numpy import random
+
+np.random.seed(seed=100)
 import matplotlib.pyplot as plt
 
 import torch.utils.data as Data
@@ -97,6 +99,19 @@ class Make_batch:
 def denormalization(points, mid_point, length) :
     return (points * length) / 2 + mid_point
 
+def split_data(src_norm_with_unknown, tgt, mid_point, length) :
+    length = src_norm_with_unknown.shape[0]
+    test_ratio = 0.3
+
+    total_index = np.arange(length)
+    np.random.shuffle(total_index)
+
+    train_index = total_index[:int(length*test_ratio)]
+    test_index = total_index[int(length*test_ratio):]
+
+    return train_index, test_index
+
+
 import utils
 if __name__ == '__main__' :
     data_path = 'dataset/train/pose_label.pkl'
@@ -109,7 +124,7 @@ if __name__ == '__main__' :
     batch_size = 10
     dataloader = Data.DataLoader(mydata, batch_size, True)
 
-    for src, tgt, mid_point, length in dataloader :
-        print(src)
-        print(tgt)
-        break
+    # for src, tgt, mid_point, length in dataloader :
+    #     print(src)
+    #     print(tgt)
+    #     break

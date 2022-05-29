@@ -7,7 +7,7 @@ import torch.utils.data as Data
 
 import util.io
 import utils
-from data.mydata import MyDataSet, Make_batch
+from data.mydata import MyDataSet, Make_batch, split_data
 from models.bidirectional_lstm import Bidirectional_LSTM
 from tools.train_tools import Trainer
 from tools.eval_tools import Evaler
@@ -32,7 +32,10 @@ if __name__ == "__main__":
     print('Make Batch Dataset', end = '...')
     data_dict = utils.load_train_data(data_path)
     src_norm_with_unknown, tgt, mid_point, length = Make_batch(data_dict, opt).get_batch()
-    mydata = MyDataSet(src_norm_with_unknown, tgt, mid_point, length)
+
+    train_index, test_index = split_data(src_norm_with_unknown, tgt, mid_point, length)
+
+    mydata = MyDataSet(src_norm_with_unknown[test_index, :, :], tgt[test_index, :, :], mid_point, length)
     print('Done!!')
 
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)

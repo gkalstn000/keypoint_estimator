@@ -42,9 +42,9 @@ class Bidirectional_LSTM_option(object):
         parser.add_argument('--n_epochs', type=int, default=200, help='number of epoch')
         parser.add_argument('--continue_train', action='store_true', help='continue_training')
 
-        parser.add_argument('--save_epoch', type=int, default=50, help='model save epoch step')
-        parser.add_argument('--print_every', type=int, default=50, help='print loss epoch step')
-        parser.add_argument('--plot_every', type=int, default=50, help='plot loss epoch step')
+        parser.add_argument('--save_epoch', type=int, default=200, help='model save epoch step')
+        parser.add_argument('--print_every', type=int, default=200, help='print loss epoch step')
+        parser.add_argument('--plot_every', type=int, default=200, help='plot loss epoch step')
 
         self.initialized = True
 
