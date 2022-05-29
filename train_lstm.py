@@ -21,8 +21,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == "__main__":
     parser = Bidirectional_LSTM_option()
     opt = parser.parse()
-    opt.device = device
     parser.save()
+    opt.device = device
+
 
     h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
     w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
