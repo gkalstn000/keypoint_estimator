@@ -56,10 +56,5 @@ if __name__ == "__main__":
                        scheduler = scheduler,
                        dataloader=dataloader)
 
-    eval = Evaler(model=model,
-                  dataloader=dataloader,
-                  device=device)
-    eval.evaluateRandomly()
-
 
 
