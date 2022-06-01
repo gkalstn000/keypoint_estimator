@@ -41,14 +41,13 @@ if __name__ == "__main__":
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
 
-    model = Bidirectional_LSTM(opt=opt)
+    model = Bidirectional_LSTM(opt=opt, grid_size_tensor=grid_size_tensor)
     model_optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate)
     scheduler = ReduceLROnPlateau(model_optimizer, 'min', verbose=True)
 
     model, _, _, _, _ = utils.load_model(opt, model, model_optimizer, scheduler)
 
     eval = Evaler(model=model,
-                  grid_size_tensor=grid_size_tensor,
                   dataloader=dataloader,
                   device=device)
 

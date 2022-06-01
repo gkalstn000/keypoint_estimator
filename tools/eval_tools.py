@@ -18,11 +18,9 @@ def showPlot(points):
 class Evaler :
     def __init__(self,
                  model,
-                 grid_size_tensor,
                  dataloader,
                  device):
         self.model = model
-        self.grid_size_tensor = grid_size_tensor
         self.device = device
         self.dataloader = dataloader
 
@@ -64,7 +62,7 @@ class Evaler :
         self.model.eval()
         with torch.no_grad():
             point = torch.from_numpy(point).float()
-            pred = self.model(point, self.grid_size_tensor)
+            pred = self.model(point)
             return pred.squeeze()
 
     def denormalization(self, points, mid_point, length):
@@ -119,7 +117,6 @@ if __name__ == '__main__' :
                               device=device)
 
     eval = Evaler(model=lstm,
-                  grid_size_tensor=grid_size_tensor,
                   dataloader=dataloader,
                   device=device)
 

@@ -6,7 +6,7 @@ import torch.utils.data as Data
 from data.mydata import MyDataSet
 
 class Bidirectional_LSTM(nn.Module):
-    def __init__(self, opt):
+    def __init__(self, opt, grid_size_tensor):
         super(Bidirectional_LSTM, self).__init__()
         self.input_dim = opt.input_dim
         self.output_dim = opt.output_dim
@@ -15,6 +15,7 @@ class Bidirectional_LSTM(nn.Module):
         self.n_layers = opt.n_layers
         self.bidirectional = opt.bidirectional
         self.device = opt.device
+        self.grid_size_tensor = grid_size_tensor
 
         self.h_embedding = nn.Embedding(opt.h_grid+1, self.embedding_dim)
         self.w_embedding = nn.Embedding(opt.w_grid+1, self.embedding_dim)
@@ -29,10 +30,10 @@ class Bidirectional_LSTM(nn.Module):
                             self.output_dim)
         self.dropout = nn.Dropout(opt.dropout)
 
-    def forward(self, input, grid_size_tensor):
+    def forward(self, input):
         if len(input.size()) != 3 :
             input = input.unsqueeze(0)
-        grid_embedding_index = torch.div(input[:, :, :-1] + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
+        grid_embedding_index = torch.div(input[:, :, :-1] + 1, self.grid_size_tensor[None, None, :], rounding_mode='trunc').int()
         h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
         w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
         output = torch.cat([h_embedding, w_embedding, input[:, :, 2].unsqueeze(2)], dim = 2)

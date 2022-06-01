@@ -83,7 +83,6 @@ class Bidirectional_LSTM_option(object):
         return argparse.Namespace(**args)
 
 if __name__ == "__main__":
-    print('here')
     parser = Bidirectional_LSTM_option()
     opt = parser.parse()
     parser.save()

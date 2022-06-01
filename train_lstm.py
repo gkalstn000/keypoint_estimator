@@ -39,7 +39,7 @@ if __name__ == "__main__":
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
 
-    model = Bidirectional_LSTM(opt=opt)
+    model = Bidirectional_LSTM(opt=opt, grid_size_tensor=grid_size_tensor)
     model_optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate)
     scheduler = ReduceLROnPlateau(model_optimizer, 'min', verbose=True)
 
@@ -49,7 +49,6 @@ if __name__ == "__main__":
 
     trainer = Trainer(opt=opt,
                       model = model,
-                      grid_size_tensor=grid_size_tensor,
                       device=device)
 
     trainer.trainIters(opt=opt,
@@ -58,7 +57,6 @@ if __name__ == "__main__":
                        dataloader=dataloader)
 
     eval = Evaler(model=model,
-                  grid_size_tensor=grid_size_tensor,
                   dataloader=dataloader,
                   device=device)
     eval.evaluateRandomly()

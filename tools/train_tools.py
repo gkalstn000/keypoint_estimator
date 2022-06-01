@@ -10,11 +10,9 @@ class Trainer :
     def __init__(self,
                  opt,
                  model,
-                 grid_size_tensor,
                  device):
         self.opt = opt
         self.model = model
-        self.grid_size_tensor = grid_size_tensor
         self.device = device
 
     def trainIters(self,
@@ -66,7 +64,7 @@ class Trainer :
               tgt,
               criterion):
 
-        pred = self.model(src, self.grid_size_tensor)
+        pred = self.model(src)
         loss = criterion(tgt, pred)
 
         return loss
