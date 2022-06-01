@@ -7,7 +7,7 @@ import torch.utils.data as Data
 
 import utils
 from data.mydata import MyDataSet, Make_batch, split_data
-from models.bidirectional_lstm import Bidirectional_LSTM
+from models.bidirectional_lstm_model import Bidirectional_LSTM
 from tools.train_tools import Trainer
 from tools.eval_tools import Evaler
 from options.bidirectional_lstm_options import Bidirectional_LSTM_option
