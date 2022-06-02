@@ -106,8 +106,8 @@ def split_data(src_norm_with_unknown, tgt, mid_point, length) :
     total_index = np.arange(length)
     np.random.shuffle(total_index)
 
-    train_index = total_index[:int(length*test_ratio)]
-    test_index = total_index[int(length*test_ratio):]
+    train_index = total_index[int(length*test_ratio):]
+    test_index = total_index[:int(length*test_ratio)]
 
     return train_index, test_index
 
