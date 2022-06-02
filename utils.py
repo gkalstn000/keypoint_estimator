@@ -98,18 +98,18 @@ def plot_key_points(src, tgt, pred, path) :
     for p1, p2 in skeleton_tree:
         h1, w1 = tgt[p1]
         h2, w2 = tgt[p2]
-        plt.plot([h1, h2], [w1, w2], color='crimson')
+        plt.plot([w1, w2], [-h1, -h2], color='crimson')
     # pred drawing
     for p1, p2 in skeleton_tree:
         h1, w1 = pred[p1]
         h2, w2 = pred[p2]
-        plt.plot([h1, h2], [w1, w2], color='green')
+        plt.plot([w1, w2], [-h1, -h2], color='green')
 
     for (h_s, w_s), (h, w) in zip(src, tgt) :
         if h_s != -1 and w_s != -1 :
-            plt.scatter(h, w, c = 'g')
+            plt.scatter(w, -h, c = 'g')
         else :
-            plt.scatter(h, w, c = 'r')
+            plt.scatter(w, -h, c = 'r')
 
     plt.savefig(path)
     plt.cla()
