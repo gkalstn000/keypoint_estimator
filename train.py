@@ -18,6 +18,8 @@ if __name__ == "__main__":
     base_opt = Base_option().parse()
     parser = create_option(base_opt)
     opt = parser.parse()
+    assert opt.mode == 'train', 'mode is not train'
+
     parser.save()
     opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

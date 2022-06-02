@@ -4,7 +4,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 import random
 import torch
-
+from tqdm import tqdm
 import utils
 
 
@@ -32,7 +32,7 @@ class Evaler :
                 strOut += strFormat % (name, src_p.tolist(), tgt_p.tolist(), pred_.tolist())
             strOut += '-'*50+'\n'
         print(strOut)
-    def evaluateRandomly(self, score, verbose = False):
+    def evaluate_score(self, score, verbose = False):
         key_point_name = ['Nose', 'Neck', 'R_shoulder', 'R_elbow', 'R_wrist', 'L_shoulder', 'L_elbow', 'L_wrist',
                           'R_pelvis', 'R_knee', 'R_ankle', 'L_pelvis', 'L_knee', 'L_ankle','R_eye', 'L_eye', 'R_ear', 'L_ear']
 
@@ -41,7 +41,7 @@ class Evaler :
         preds = []
         total_scores = []
         masked_scores = []
-        for src, tgt, mid_point, length in self.dataloader:
+        for src, tgt, mid_point, length in tqdm(self.dataloader):
             src, tgt, mid_point, length = src.float(), tgt.float(), mid_point.float(), length.float()
             pred = self.evaluate(point=src)
             src_denorm = self.denormalization(src[:, :, :-1], mid_point, length)
@@ -55,8 +55,8 @@ class Evaler :
             srcs.append(src_denorm)
             tgts.append(tgt)
             preds.append(pred)
-
-        return np.stack(srcs, axis = 0), np.stack(tgts, axis = 0), np.stack(preds, axis = 0)
+        print(f'total score : {sum(total_scores) / len(total_scores)}, masked score : {sum(masked_scores) / len(masked_scores)}')
+        return torch.cat(srcs, dim = 0), torch.cat(tgts, dim = 0),  torch.cat(preds, dim = 0)
 
 
 

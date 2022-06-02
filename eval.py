@@ -15,16 +15,14 @@ from options.base_options import Base_option
 from models import create_model
 from options import create_option
 import os
-import scores.point_scores as scores
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
+import scores.scores as scores
+from tqdm import tqdm, trange
 
 if __name__ == "__main__":
     base_opt = Base_option().parse()
     parser = create_option(base_opt)
     opt = parser.parse()
+    assert opt.mode == 'test', 'mode is not test'
     parser.save()
     opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -54,10 +52,10 @@ if __name__ == "__main__":
                   model=model,
                   dataloader=dataloader)
 
-    src, tgt, pred = eval.evaluateRandomly(score=scores.score)
+    src, tgt, pred = eval.evaluate_score(score=scores.L2_score)
 
     plot_save_path = f'checkpoints/{opt.model}/{opt.id}/figure'
     util.io.mkdir_if_missing((plot_save_path))
-    for i in range(src.shape[0]) :
+    for i in trange(src.shape[0]) :
         utils.plot_key_points(src[i], tgt[i], pred[i], os.path.join(plot_save_path, f'compare_figure_{i}.png'))
 
