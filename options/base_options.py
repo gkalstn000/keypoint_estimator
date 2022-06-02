@@ -38,6 +38,7 @@ class Base_option(object):
         parser.add_argument('--save_epoch', type=int, default=200, help='model save epoch step')
         parser.add_argument('--print_every', type=int, default=200, help='print loss epoch step')
         parser.add_argument('--plot_every', type=int, default=200, help='plot loss epoch step')
+        parser.add_argument('--save_eval_image', action='store_true', help='save eval image result')
 
         self.initialized = True
 

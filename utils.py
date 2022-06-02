@@ -6,7 +6,7 @@ import torch
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
+import key_point_name as kpn
 
 def load_train_data(data_path) :
     '''
@@ -84,12 +84,6 @@ def load_model(opt, model, optimizer, scheduler) :
     return model, optimizer, scheduler, epoch, loss
 
 def plot_key_points(src, tgt, pred, path) :
-    skeleton_tree = [[16, 14], [14, 0], [15, 0], [17, 15], [0, 1],
-                     [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7],
-                     [1, 8], [8, 9], [9, 10], [1, 11], [11, 12], [12, 13]]
-    key_point_name = ['Nose', 'Neck', 'R_shoulder', 'R_elbow', 'R_wrist', 'L_shoulder', 'L_elbow', 'L_wrist',
-                      'R_pelvis', 'R_knee', 'R_ankle', 'L_pelvis', 'L_knee', 'L_ankle', 'R_eye', 'L_eye', 'R_ear',
-                      'L_ear']
     if type(pred) != np.ndarray or type(src) != np.ndarray:
         src.numpy()
         tgt.numpy()
@@ -97,18 +91,18 @@ def plot_key_points(src, tgt, pred, path) :
 
 
     # tgt drawing
-    for p1, p2 in skeleton_tree:
+    for p1, p2 in kpn.skeleton_tree:
         h1, w1 = tgt[p1]
         h2, w2 = tgt[p2]
         plt.plot([w1, w2], [-h1, -h2], color='crimson')
     plt.plot([0], [0], color='crimson', label='Target')
     # pred drawing
-    for p1, p2 in skeleton_tree:
+    for p1, p2 in kpn.skeleton_tree:
         h1, w1 = pred[p1]
         h2, w2 = pred[p2]
         plt.plot([w1, w2], [-h1, -h2], color='green')
     plt.plot([0], [0], color='green', label='Pred')
-    for p, key in zip(pred, key_point_name) :
+    for p, key in zip(pred, kpn.key_point_name) :
         h, w = p
         plt.scatter(w, -h, marker='^', color='blue')
         plt.text(w, -h, key)

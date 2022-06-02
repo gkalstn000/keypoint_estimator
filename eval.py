@@ -52,10 +52,12 @@ if __name__ == "__main__":
                   model=model,
                   dataloader=dataloader)
 
-    src, tgt, pred = eval.evaluate_score(score=scores.L2_score)
-
+    src, tgt, pred, score_df = eval.evaluate_score(score=scores.score)
     plot_save_path = f'checkpoints/{opt.model}/{opt.id}/figure'
+
+    score_df.to_csv(f'checkpoints/{opt.model}/{opt.id}/score.csv')
     util.io.mkdir_if_missing((plot_save_path))
-    for i in trange(src.shape[0]) :
-        utils.plot_key_points(src[i], tgt[i], pred[i], os.path.join(plot_save_path, f'compare_figure_{i}.png'))
+    if opt.save_eval_image :
+        for i in trange(src.shape[0]) :
+            utils.plot_key_points(src[i], tgt[i], pred[i], os.path.join(plot_save_path, f'compare_figure_{i}.png'))
 

@@ -6,8 +6,8 @@ import random
 import torch
 from tqdm import tqdm
 import utils
-
-
+import key_point_name as kpn
+import pandas as pd
 def showPlot(points):
     plt.figure()
     fig, ax = plt.subplots()
@@ -33,33 +33,44 @@ class Evaler :
             strOut += '-'*50+'\n'
         print(strOut)
     def evaluate_score(self, score, verbose = False):
-        key_point_name = ['Nose', 'Neck', 'R_shoulder', 'R_elbow', 'R_wrist', 'L_shoulder', 'L_elbow', 'L_wrist',
-                          'R_pelvis', 'R_knee', 'R_ankle', 'L_pelvis', 'L_knee', 'L_ankle','R_eye', 'L_eye', 'R_ear', 'L_ear']
-
         srcs = []
         tgts = []
         preds = []
-        total_scores = []
-        masked_scores = []
+
+        l2_scores = []
+        l2_mask_scores = []
+        pckh_scores = []
+        pckh_mask_scores = []
+
         for src, tgt, mid_point, length in tqdm(self.dataloader):
             src, tgt, mid_point, length = src.float(), tgt.float(), mid_point.float(), length.float()
+            # pred 계산
             pred = self.evaluate(point=src)
             src_denorm = self.denormalization(src[:, :, :-1], mid_point, length)
-            if verbose :
-                self.print_points(src_denorm, tgt, pred, key_point_name)
-
-            total_score, masked_score = score(src_denorm, tgt, pred)
-            total_scores.append(total_score)
-            masked_scores.append((masked_score))
-
+            # image 출력을 위한 append
             srcs.append(src_denorm)
             tgts.append(tgt)
             preds.append(pred)
-        print(f'total score : {sum(total_scores) / len(total_scores)}, masked score : {sum(masked_scores) / len(masked_scores)}')
-        return torch.cat(srcs, dim = 0), torch.cat(tgts, dim = 0),  torch.cat(preds, dim = 0)
+
+            if verbose :
+                self.print_points(src_denorm, tgt, pred, kpn.key_point_name)
+
+            (l2, l2_mask), (pckh, pckh_mask) = score(src_denorm, tgt, pred)
+            l2_scores.append(l2)
+            l2_mask_scores.append(l2_mask)
+            pckh_scores.append(pckh)
+            pckh_mask_scores .append(pckh_mask)
+
+        l2 = np.nanmean(np.stack(l2_scores, axis = 0), axis = 0)
+        l2_mask = np.nanmean(np.stack(l2_mask_scores, axis = 0), axis = 0)
+        pckh = np.nanmean(np.stack(pckh_scores, axis = 0), axis = 0)
+        pckh_mask = np.nanmean(np.stack(pckh_mask_scores, axis = 0), axis = 0)
+        score_df = pd.DataFrame([l2, l2_mask, pckh, pckh_mask],
+                                columns = ['total']+kpn.key_point_name,
+                                index = ['l2', 'l2_masked', 'pckh', 'pckh_masked'])
 
 
-
+        return torch.cat(srcs, dim = 0), torch.cat(tgts, dim = 0),  torch.cat(preds, dim = 0), score_df.round(3)
 
     def evaluate(self, point):
         self.model.eval()
