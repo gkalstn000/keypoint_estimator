@@ -93,13 +93,13 @@ class EncoderLayer(nn.Module):
         enc_outputs = self.pos_ffn(enc_outputs) # enc_outputs: [batch_size, seq_len, d_model]
         return enc_outputs
 
-from options.transformer_options import Transformer_option
+from options.transformer_options import Transformer
 import utils
 from data.mydata import MyDataSet, Make_batch, split_data
 import torch.utils.data as Data
 
 if __name__ == '__main__' :
-    parser = Transformer_option()
+    parser = Transformer()
     opt = parser.parse()
     parser.save()
     opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -6,9 +6,9 @@ import os
 import util.io as io
 from options.base_options import Base_option
 
-class Bidirectional_LSTM_option(Base_option):
+class Bidirectional_LSTM(Base_option):
     def initialize(self):
-        super(Bidirectional_LSTM_option, self).initialize()
+        super(Bidirectional_LSTM, self).initialize()
         parser = self.parser
         # model params
         parser.add_argument('--input_dim', type=int, default=3, help='input dimension')
@@ -20,7 +20,7 @@ class Bidirectional_LSTM_option(Base_option):
         parser.add_argument('--dropout', type=float, default=0.5, help='dropout rate')
 
 if __name__ == "__main__":
-    parser = Bidirectional_LSTM_option()
+    parser = Bidirectional_LSTM()
     opt = parser.parse()
     parser.save()
     parser.load('train_opt.json')

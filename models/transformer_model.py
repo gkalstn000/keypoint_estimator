@@ -3,10 +3,10 @@ import math
 import torch
 import numpy as np
 import torch.nn as nn
-from models.networks.transformer_network import *
+from .networks.transformer_network import *
 
 class Transformer(nn.Module):
-    def __init__(self, opt, grid_size_tensor):
+    def __init__(self, opt):
         super(Transformer, self).__init__()
         self.h_grid = opt.h_grid
         self.w_grid = opt.w_grid
@@ -18,7 +18,7 @@ class Transformer(nn.Module):
         self.d_v = opt.d_v
         self.n_heads = opt.n_heads
         self.d_ff = opt.d_ff
-        self.grid_size_tensor = grid_size_tensor
+        self.grid_size_tensor = opt.grid_size_tensor
 
         self.embedding = Embedding(h_grid=self.h_grid, w_grid=self.w_grid, embedding_dim=self.embedding_dim)
 
@@ -31,6 +31,8 @@ class Transformer(nn.Module):
         self.MLM_Regressor = nn.Linear(d_model, self.output_dim)
 
     def forward(self, x):
+        if len(x.size()) != 3 :
+            x = x.unsqueeze(0)
         output = self.embedding(x, self.grid_size_tensor) # [bach_size, seq_len, d_model]
 
         for layer in self.layers:
@@ -41,14 +43,8 @@ class Transformer(nn.Module):
         logits_lm = self.MLM_Regressor(output) # [batch_size, max_pred, vocab_size]
         return logits_lm
 
-
-from options.transformer_options import Transformer_option
-import utils
-from data.mydata import MyDataSet, Make_batch, split_data
-import torch.utils.data as Data
-
 if __name__ == '__main__' :
-    parser = Transformer_option()
+    parser = Transformer()
     opt = parser.parse()
     parser.save()
     opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

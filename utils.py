@@ -41,8 +41,8 @@ def save_model(opt, epoch, model, optimizer, scheduler, loss, file_name) :
     root = 'checkpoints'
     latest_file_name = 'model_param_latest'
 
-    file_path = os.path.join(root, id, file_name)
-    latest_file_path = os.path.join(root, id, latest_file_name)
+    file_path = os.path.join(root, opt.model, id, file_name)
+    latest_file_path = os.path.join(root, opt.model, id, latest_file_name)
 
     print('saveing model')
     print(f"""
@@ -68,7 +68,7 @@ def load_model(opt, model, optimizer, scheduler) :
         return model, optimizer, scheduler, 1, 0
     id = opt.id
     root = 'checkpoints'
-    file_path = os.path.join(root, id, opt.model_name)
+    file_path = os.path.join(root, opt.model, id, opt.model_name)
     assert os.path.isfile(file_path), f'there is no {file_path}'
 
     print(f'Load model, optimizer, epoch, loss from {file_path}')

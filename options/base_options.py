@@ -21,7 +21,7 @@ class Base_option(object):
         # path params
         parser.add_argument('--id', type=str, default='default', help='experiment ID. the experiment dir will be set as "./checkpoint/id/"')
         parser.add_argument('--model_name', type=str, default='model_param_latest', help='load model params with file name')
-        parser.add_argument('--model', type=str, default='model name', help='[bidirectional_lstm, transformer, gan]')
+        parser.add_argument('--model', type=str, default='bidirectional_lstm', help='[bidirectional_lstm, transformer, gan]')
 
         # input params
         parser.add_argument('--height', type=int, default=256, help='height of image')
@@ -31,7 +31,7 @@ class Base_option(object):
         # training params
         parser.add_argument('--mode', type=str, default='train', help='set mode [train/test]')
         parser.add_argument('--batch_size', type=int, default=256, help='batch_size')
-        parser.add_argument('--learning_rate', type=float, default=0.005, help='learning rate')
+        parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate')
         parser.add_argument('--n_epochs', type=int, default=200, help='number of epoch')
         parser.add_argument('--continue_train', action='store_true', help='continue_training')
 

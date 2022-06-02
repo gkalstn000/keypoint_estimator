@@ -11,8 +11,9 @@ from data.mydata import MyDataSet, Make_batch, split_data
 from models.bidirectional_lstm_model import Bidirectional_LSTM
 from tools.train_tools import Trainer
 from tools.eval_tools import Evaler
-from options.bidirectional_lstm_options import Bidirectional_LSTM_option
-
+from options.base_options import Base_option
+from models import create_model
+from options import create_option
 import os
 import scores.point_scores as scores
 
@@ -21,9 +22,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 if __name__ == "__main__":
-    parser = Bidirectional_LSTM_option()
+    base_opt = Base_option().parse()
+    parser = create_option(base_opt)
     opt = parser.parse()
-    opt.device = device
+    parser.save()
+    opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
     w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
@@ -40,20 +43,20 @@ if __name__ == "__main__":
 
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
-
-    model = Bidirectional_LSTM(opt=opt, grid_size_tensor=grid_size_tensor)
+    opt.grid_size_tensor = grid_size_tensor
+    model = create_model(opt)
     model_optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate)
     scheduler = ReduceLROnPlateau(model_optimizer, 'min', verbose=True)
 
     model, _, _, _, _ = utils.load_model(opt, model, model_optimizer, scheduler)
 
-    eval = Evaler(model=model,
-                  dataloader=dataloader,
-                  device=device)
+    eval = Evaler(opt=opt,
+                  model=model,
+                  dataloader=dataloader)
 
     src, tgt, pred = eval.evaluateRandomly(score=scores.score)
 
-    plot_save_path = f'checkpoints/{opt.id}/figure'
+    plot_save_path = f'checkpoints/{opt.model}/{opt.id}/figure'
     util.io.mkdir_if_missing((plot_save_path))
     for i in range(src.shape[0]) :
         utils.plot_key_points(src[i], tgt[i], pred[i], os.path.join(plot_save_path, f'compare_figure_{i}.png'))

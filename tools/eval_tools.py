@@ -17,11 +17,11 @@ def showPlot(points):
     plt.plot(points)
 class Evaler :
     def __init__(self,
+                 opt,
                  model,
-                 dataloader,
-                 device):
+                 dataloader):
         self.model = model
-        self.device = device
+        self.device = opt.device
         self.dataloader = dataloader
 
     def print_points(self, src, tgt, pred, key_point_name):

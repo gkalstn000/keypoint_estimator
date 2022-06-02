@@ -9,11 +9,10 @@ from tqdm import trange
 class Trainer :
     def __init__(self,
                  opt,
-                 model,
-                 device):
+                 model):
         self.opt = opt
         self.model = model
-        self.device = device
+        self.device = opt.device
 
     def trainIters(self,
                    opt,
@@ -25,11 +24,7 @@ class Trainer :
         plot_losses = []
         loss_total = opt.loss  # print_every 마다 초기화
 
-
-
         criterion = nn.MSELoss()
-
-        # 여기 batch 단위로 받도록 수정해야겠음.
 
         for epoch in trange(opt.epoch, opt.n_epochs+1) :
             for src, tgt, mid_point, length in dataloader:
