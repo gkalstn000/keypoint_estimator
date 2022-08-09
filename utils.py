@@ -22,8 +22,8 @@ def load_train_data(data_path) :
         for x, y in val:
             if not (x > 0 and y > 0):
                 count_flag += 1
-        if count_flag == 0:
-            train_X[key] = [[y, x] for x, y in val] # (x, y) -> (h, w)
+        if count_flag < 3: # 최소 16개의 keypoint가 있는 Pose
+            train_X[key] = [[y, int((x-0) * 176 / 256) if x != -1 else x] for x, y in val] # (x, y) -> (h, w)
     return train_X
 
 def load_test_data(data_path) :
@@ -118,7 +118,16 @@ def plot_key_points(src, tgt, pred, path) :
     plt.savefig(path)
     plt.cla()
 
+def single_plot_key_points(points, loss)  :
+    if type(points) != np.ndarray:
+        points.numpy()
 
+    for p1, p2 in kpn.skeleton_tree:
+        h1, w1 = points[p1]
+        h2, w2 = points[p2]
+        plt.plot([w1, w2], [-h1, -h2], color='crimson')
+    plt.title(f'Pose loss : {loss.tolist()}' )
+    plt.show()
 if __name__ == "__main__":
     train_path = 'dataset/train/pose_label.pkl'
     test_path = 'dataset/test/fasion-annotation-test.csv'

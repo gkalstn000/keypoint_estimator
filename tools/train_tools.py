@@ -6,6 +6,9 @@ import torch.nn as nn
 import utils
 import tools.eval_tools as eval_tools
 from tqdm import trange
+from custom_loss.pose_loss import cal_pose_loss
+from custom_loss.limb_agreement import cal_limb_agreement
+
 class Trainer :
     def __init__(self,
                  opt,
@@ -24,15 +27,20 @@ class Trainer :
         plot_losses = []
         loss_total = opt.loss  # print_every 마다 초기화
 
-        criterion = nn.MSELoss()
-
+        mse = nn.MSELoss()
+        limb_agreement = cal_limb_agreement
         for epoch in trange(opt.epoch, opt.n_epochs+1) :
             for src, tgt, mid_point, length in dataloader:
                 self.model.train()
                 src, tgt = src.float(), tgt.float()
 
                 model_optimizer.zero_grad()
-                loss = self.train(src, tgt, criterion)
+                pred = self.model(src)
+                # loss = 0.001*mse(tgt, pred) + 1*limb_agreement(tgt, pred)
+                loss = limb_agreement(tgt, pred)
+                print(f'limb agreement : {limb_agreement(tgt, pred)}')
+
+                # print(f'mse : {0.001*mse(tgt, pred)}\t limb agreement : {limb_agreement(tgt, pred)}')
                 loss_total += (loss.item() / tgt.size(0))
 
                 loss.backward()
@@ -54,15 +62,6 @@ class Trainer :
 
         eval_tools.showPlot(plot_losses)
 
-    def train(self,
-              src,
-              tgt,
-              criterion):
-
-        pred = self.model(src)
-        loss = criterion(tgt, pred)
-
-        return loss
 
 def asMinutes(s):
     m = math.floor(s / 60)

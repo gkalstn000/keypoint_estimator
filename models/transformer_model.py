@@ -29,6 +29,7 @@ class Transformer(nn.Module):
         self.activ2 = gelu
         # fc2 is shared with embedding layer
         self.MLM_Regressor = nn.Linear(d_model, self.output_dim)
+        self.Classifier = nn.Linear(d_model, 1)
 
     def forward(self, x):
         if len(x.size()) != 3 :

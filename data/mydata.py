@@ -8,9 +8,14 @@ import matplotlib.pyplot as plt
 import torch.utils.data as Data
 import torch
 
+def set_random(seed = 1004) :
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
+
 class MyDataSet(Data.Dataset) :
-    def __init__(self, src_norm_with_unknown, tgt, mid_point, length):
-        self.src_norm_with_unknown = src_norm_with_unknown
+    def __init__(self, src, tgt, mid_point, length):
+        self.src = src
         self.tgt = tgt
         self.mid_point = mid_point
         self.length = length
@@ -18,7 +23,7 @@ class MyDataSet(Data.Dataset) :
     def __len__(self):
         return self.tgt.shape[0]
     def __getitem__(self, idx):
-        return self.src_norm_with_unknown[idx], self.tgt[idx], self.mid_point, self.length
+        return self.src[idx], self.tgt[idx], self.mid_point, self.length
 
 class Make_batch:
     def __init__(self, data_dict, opt):
@@ -27,13 +32,19 @@ class Make_batch:
         self.height = opt.height
         self.width = opt.width
 
+        self.alpha = opt.alpha
+        self.beta = opt.beta
+
     def get_batch(self):
         R, R_inv, T = self.affine_matrix_batch()
+        # occlusion 좌표 index
+        occlusion_index = (self.key_points == np.array([-1, -1]))[:, :, 0]
+
 
         scaling = self.key_points @ R_inv
         moving = R_inv @ np.expand_dims(T, axis=2)
         tgt = scaling - moving.transpose(0, 2, 1)  # (B, L, 2)
-
+        tgt[occlusion_index] = np.array([self.height + 1, self.width + 1])
         # Normalization을 위한 values
         max_point = np.array([[self.height, self.width]])
         min_point = np.array([[0, 0]])
@@ -52,9 +63,10 @@ class Make_batch:
 
         src = tgt.copy()
         src[unknown_index] = np.array([self.height + 1, self.width + 1])
+        src[occlusion_index] = np.array([self.height + 1, self.width + 1])
         src_norm = (src-mid_point) * 2 / length
-        src_norm_with_unknown = np.concatenate((src_norm, unknown_token), axis = 2)
-        return src_norm_with_unknown, tgt, mid_point, length
+        tgt_with_occlusion = np.concatenate((tgt, np.expand_dims(occlusion_index, 2)), axis = 2)
+        return src_norm, tgt_with_occlusion, mid_point, length
 
 
     def affine_matrix_batch(self):
@@ -72,11 +84,11 @@ class Make_batch:
 
         return R, R_inv, T
 
-    def affine_matrix(self, alpha=32, beta=20):
+    def affine_matrix(self):
         h_blank = self.height / 10
         w_blank = self.width / 10
         while True:
-            h_scale, w_scale = random.beta(alpha, beta, size=2)
+            h_scale, w_scale = random.beta(self.alpha, self.beta, size=2)
             h_move = random.uniform(0, (1 - h_scale) * self.height)
             w_move = random.uniform(0, (1 - w_scale) * self.width)
 
@@ -99,8 +111,9 @@ class Make_batch:
 def denormalization(points, mid_point, length) :
     return (points * length) / 2 + mid_point
 
-def split_data(src_norm_with_unknown, tgt, mid_point, length) :
-    length = src_norm_with_unknown.shape[0]
+def split_data(src, tgt, mid_point, length) :
+    set_random()
+    length = src.shape[0]
     test_ratio = 0.3
 
     total_index = np.arange(length)

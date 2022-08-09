@@ -20,6 +20,7 @@ def L2_score(source, target, prediction) :
     l2_masked = l2 * mask_index
     l2_masked_total = l2_masked.nanmean()
     l2_masked_key_point = l2_masked.nanmean(0)
+    # l2_masked_key_point = torch.nan_to_num(l2_masked_key_point, 0.0)
     return [l2_total.tolist()] + l2_key_point.tolist(), \
             [l2_masked_total.tolist()] + l2_masked_key_point.tolist()
 

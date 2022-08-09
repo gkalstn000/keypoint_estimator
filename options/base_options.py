@@ -25,7 +25,7 @@ class Base_option(object):
 
         # input params
         parser.add_argument('--height', type=int, default=256, help='height of image')
-        parser.add_argument('--width', type=int, default=256, help='width of image')
+        parser.add_argument('--width', type=int, default=176, help='width of image')
         parser.add_argument('--h_grid', type=int, default=100, help='number of height embedding')
         parser.add_argument('--w_grid', type=int, default=100, help='number of height embedding')
         # training params
@@ -34,6 +34,10 @@ class Base_option(object):
         parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate')
         parser.add_argument('--n_epochs', type=int, default=200, help='number of epoch')
         parser.add_argument('--continue_train', action='store_true', help='continue_training')
+        # data params
+        parser.add_argument('--alpha', type=float, default=32, help='learning rate')
+        parser.add_argument('--beta', type=float, default=20, help='learning rate')
+
 
         parser.add_argument('--save_epoch', type=int, default=200, help='model save epoch step')
         parser.add_argument('--print_every', type=int, default=200, help='print loss epoch step')

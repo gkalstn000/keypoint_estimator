@@ -1,2 +1,1 @@
-python train.py --n_epochs 10000 --model bidirectional_lstm --id 0602-2
-python train.py --n_epochs 10000 --model transformer --id 0602-2
+python train.py --n_epochs 10000 --model transformer --id 0609-alpha:32,beta:20,limb_agreement --learning_rate 0.005

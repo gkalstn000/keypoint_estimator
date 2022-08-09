@@ -14,6 +14,9 @@ from options.base_options import Base_option
 from models import create_model
 from options import create_option
 
+import random
+import numpy as np
+
 if __name__ == "__main__":
     base_opt = Base_option().parse()
     parser = create_option(base_opt)
@@ -30,10 +33,10 @@ if __name__ == "__main__":
     data_path = 'dataset/train/pose_label.pkl'
     print('Make Batch Dataset', end = '...')
     data_dict = utils.load_train_data(data_path)
-    src_norm_with_unknown, tgt, mid_point, length = Make_batch(data_dict, opt).get_batch()
-    train_index, test_index = split_data(src_norm_with_unknown, tgt, mid_point, length)
+    src, tgt_with_occlusion, mid_point, length = Make_batch(data_dict, opt).get_batch()
+    train_index, test_index = split_data(src, tgt_with_occlusion, mid_point, length)
 
-    mydata = MyDataSet(src_norm_with_unknown[train_index, :, :], tgt[train_index, :, :], mid_point, length)
+    mydata = MyDataSet(src[train_index, :, :], tgt_with_occlusion[train_index, :, :], mid_point, length)
     print('Done!!', end = '...')
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
@@ -49,11 +52,11 @@ if __name__ == "__main__":
     # opt.epoch = 1
     # opt.loss = 0
     trainer = Trainer(opt=opt,
-                      model = model)
+                      model=model)
 
     trainer.trainIters(opt=opt,
-                       model_optimizer = model_optimizer,
-                       scheduler = scheduler,
+                       model_optimizer=model_optimizer,
+                       scheduler=scheduler,
                        dataloader=dataloader)
 
 
