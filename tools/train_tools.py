@@ -27,24 +27,29 @@ class Trainer :
         plot_losses = []
         loss_total = opt.loss  # print_every 마다 초기화
 
-        mse = nn.MSELoss()
+        MSE = nn.MSELoss()
+        BCE = nn.BCELoss()
         limb_agreement = cal_limb_agreement
         for epoch in trange(opt.epoch, opt.n_epochs+1) :
             for src, tgt, mid_point, length in dataloader:
                 self.model.train()
                 src, tgt = src.float(), tgt.float()
-
+                keypoint_tgt, occlusion_tgt = tgt[:, :, :2], tgt[:, :, 2].unsqueeze(2)
+                visible_index = occlusion_tgt.squeeze() != 1
                 model_optimizer.zero_grad()
-                pred = self.model(src)
+                keypoint_logits, occlusion_logits = self.model(src)
                 # loss = 0.001*mse(tgt, pred) + 1*limb_agreement(tgt, pred)
-                loss = limb_agreement(tgt, pred)
-                print(f'limb agreement : {limb_agreement(tgt, pred)}')
 
-                # print(f'mse : {0.001*mse(tgt, pred)}\t limb agreement : {limb_agreement(tgt, pred)}')
+                occlusion_BCEloss = BCE(occlusion_logits, occlusion_tgt)
+                keypoint_MSEloss = MSE(keypoint_tgt[visible_index], keypoint_logits[visible_index])
+
+                loss =  0.01 * keypoint_MSEloss + 1 * occlusion_BCEloss
+                print(f'mse : {keypoint_MSEloss}\t occlusion  : {occlusion_BCEloss}')
                 loss_total += (loss.item() / tgt.size(0))
 
                 loss.backward()
                 model_optimizer.step()
+
             scheduler.step(loss_total / epoch)
 
             if epoch % opt.print_every == 0:

@@ -71,10 +71,11 @@ class Embedding(nn.Module):
 
     def forward(self, x, grid_size_tensor):
         # key point embedding
-        grid_embedding_index = torch.div(x[:, :, :-1] + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
+        unknown_index = (x > 1)[:, :, 0]
+        grid_embedding_index = torch.div(x + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
         h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
         w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
-        point_embedding = torch.cat([h_embedding, w_embedding, x[:, :, 2].unsqueeze(2)], dim = 2)
+        point_embedding = torch.cat([h_embedding, w_embedding, unknown_index.unsqueeze(2)], dim = 2)
         # pos embedding
         pos = torch.arange(self.max_len)
         pos = pos.unsqueeze(0).repeat(x.size(0), 1)  # [seq_len] -> [batch_size, seq_len]

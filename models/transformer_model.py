@@ -5,6 +5,17 @@ import numpy as np
 import torch.nn as nn
 from .networks.transformer_network import *
 
+def fc_layer(size_in, size_out, last_layer = False, keep_prob=1):
+    linear = nn.Linear(size_in, size_out)
+
+    layer = nn.Sequential(
+        linear,
+        # nn.BatchNorm1d(18),
+        nn.Dropout(p=1 - keep_prob),
+        nn.ReLU() if not last_layer else nn.Sigmoid()
+    )
+    return layer
+
 class Transformer(nn.Module):
     def __init__(self, opt):
         super(Transformer, self).__init__()
@@ -19,6 +30,7 @@ class Transformer(nn.Module):
         self.n_heads = opt.n_heads
         self.d_ff = opt.d_ff
         self.grid_size_tensor = opt.grid_size_tensor
+        self.sigmoid = nn.Sigmoid()
 
         self.embedding = Embedding(h_grid=self.h_grid, w_grid=self.w_grid, embedding_dim=self.embedding_dim)
 
@@ -28,9 +40,19 @@ class Transformer(nn.Module):
         self.mask_kernel = nn.Linear(d_model, d_model)
         self.activ2 = gelu
         # fc2 is shared with embedding layer
-        self.MLM_Regressor = nn.Linear(d_model, self.output_dim)
-        self.Classifier = nn.Linear(d_model, 1)
+        # self.MLM_Regressor = nn.Linear(d_model, self.output_dim)
+        self.MLM_Regressor = nn.ModuleList()
+        input_ = d_model
+        for output in [self.d_ff, 32, self.output_dim]:
+            self.MLM_Regressor.append(fc_layer(input_, output))
+            input_ = output
 
+        self.Classifier = nn.ModuleList()
+        input_ = d_model # embedding*2+1
+        for output in [self.d_ff, 32]:
+            self.Classifier.append(fc_layer(input_, output))
+            input_ = output
+        self.Classifier.append(fc_layer(input_, 1, True))
     def forward(self, x):
         if len(x.size()) != 3 :
             x = x.unsqueeze(0)
@@ -41,8 +63,16 @@ class Transformer(nn.Module):
             output = layer(output)
 
         output = self.activ2(self.mask_kernel(output)) # [batch_size, max_pred, d_model]
-        logits_lm = self.MLM_Regressor(output) # [batch_size, max_pred, vocab_size]
-        return logits_lm
+
+        keypoint_logits = output
+        for linear in self.MLM_Regressor :
+            keypoint_logits = linear(keypoint_logits)
+
+        occlusion_logits = output
+        for linear in self.Classifier :
+            occlusion_logits = linear(occlusion_logits)
+
+        return keypoint_logits, occlusion_logits
 
 if __name__ == '__main__' :
     parser = Transformer()
