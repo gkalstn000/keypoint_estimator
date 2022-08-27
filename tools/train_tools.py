@@ -24,8 +24,12 @@ class Trainer :
                    dataloader):
 
         start = time.time()
-        plot_losses = []
+        plot_total_losses = []
+        plot_keypoint_losses = []
+        plot_occlusion_losses = []
         loss_total = opt.loss  # print_every 마다 초기화
+        loss_keypoint = 0
+        loss_occlusion = 0
 
         MSE = nn.MSELoss()
         BCE = nn.BCELoss()
@@ -43,9 +47,13 @@ class Trainer :
                 occlusion_BCEloss = BCE(occlusion_logits, occlusion_tgt)
                 keypoint_MSEloss = MSE(keypoint_tgt[visible_index], keypoint_logits[visible_index])
 
-                loss =  0.01 * keypoint_MSEloss + 1 * occlusion_BCEloss
-                print(f'mse : {keypoint_MSEloss}\t occlusion  : {occlusion_BCEloss}')
+                loss =  opt.lambda_k * keypoint_MSEloss + opt.lambda_o * occlusion_BCEloss
+                # print(f'mse : {keypoint_MSEloss}\t occlusion  : {occlusion_BCEloss}')
                 loss_total += (loss.item() / tgt.size(0))
+                loss_keypoint += (opt.lambda_k * keypoint_MSEloss.item() / tgt.size(0))
+                loss_occlusion += (opt.lambda_o * occlusion_BCEloss.item() / tgt.size(0))
+
+                # print(f'loss total : {loss_total / epoch}')
 
                 loss.backward()
                 model_optimizer.step()
@@ -59,13 +67,18 @@ class Trainer :
 
             if epoch % opt.plot_every == 0:
                 plot_loss_avg = loss_total / epoch
-                plot_losses.append(plot_loss_avg)
+                plot_keyloss_avg = loss_keypoint / epoch
+                plot_occlusion_avg = loss_occlusion / epoch
+
+                plot_total_losses.append(plot_loss_avg)
+                plot_keypoint_losses.append(plot_keyloss_avg)
+                plot_occlusion_losses.append(plot_occlusion_avg)
 
             if epoch % opt.save_epoch == 0 :
                 file_name = f'model_params_{epoch}_epoch'
                 utils.save_model(opt, epoch, self.model, model_optimizer, scheduler, loss_total, file_name)
 
-        eval_tools.showPlot(plot_losses)
+        eval_tools.showPlot(plot_total_losses, plot_keypoint_losses, plot_occlusion_losses, opt)
 
 
 def asMinutes(s):

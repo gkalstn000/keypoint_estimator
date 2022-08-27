@@ -83,37 +83,73 @@ def load_model(opt, model, optimizer, scheduler) :
 
     return model, optimizer, scheduler, epoch, loss
 
-def plot_key_points(src, tgt, pred, path) :
+def plot_key_points(src, tgt, pred, occ_true, occ_pred, path) :
     if type(pred) != np.ndarray or type(src) != np.ndarray:
         src.numpy()
         tgt.numpy()
         pred.numpy()
+        occ_true.numpy()
+        occ_pred.numpy()
 
 
-    # tgt drawing
-    for p1, p2 in kpn.skeleton_tree:
+    # True drawing
+    for p1, p2 in kpn.skeleton_tree: # line 그리기
         h1, w1 = tgt[p1]
         h2, w2 = tgt[p2]
+        if occ_true[p1] == 1 or occ_true[p2] == 1 : continue # occlusion 제외
         plt.plot([w1, w2], [-h1, -h2], color='crimson')
-    plt.plot([0], [0], color='crimson', label='Target')
-    # pred drawing
-    for p1, p2 in kpn.skeleton_tree:
-        h1, w1 = pred[p1]
-        h2, w2 = pred[p2]
-        plt.plot([w1, w2], [-h1, -h2], color='green')
-    plt.plot([0], [0], color='green', label='Pred')
-    for p, key in zip(pred, kpn.key_point_name) :
-        h, w = p
-        plt.scatter(w, -h, marker='^', color='blue')
-        plt.text(w, -h, key)
 
-    for (h_s, w_s), (h, w) in zip(src, tgt) :
+    for (h_s, w_s), (h, w), occ, key in zip(src, tgt, occ_true, kpn.key_point_name) :
+        if occ == 1 : continue
         if h_s != -1 and w_s != -1 :
-            plt.scatter(w, -h, c = 'g')
+            plt.scatter(w, -h, marker='o', c = 'g')
         else :
             plt.scatter(w, -h, marker='x', c = 'r')
+        plt.text(w, -h, key)
 
-    plt.legend()
+    # Pred drawing
+    for p1, p2 in kpn.skeleton_tree: # line 그리기
+        h1, w1 = tgt[p1] if src[p1][0] != -1 else pred[p1]
+        h2, w2 = tgt[p2] if src[p2][0] != -1 else pred[p2]
+        if occ_pred[p1] == 1 or occ_pred[p2] == 1 : continue # occlusion 제외
+        plt.plot([w1+150, w2+150], [-h1, -h2], color='green')
+
+    for src_p, true_p, pred_p, occ_p, occ_t, key in zip(src, tgt, pred, occ_pred, occ_true, kpn.key_point_name) :
+        if occ_p == 1: continue
+        h, w = true_p if src_p[0] != -1 else pred_p
+        if occ_p == occ_t :
+            plt.scatter(w+150, -h, marker='^', color='blue')
+        else :
+            plt.scatter(w + 150, -h, marker='^', color='red')
+        plt.text(w+150, -h, key)
+
+    #
+    # # tgt drawing
+    # for p1, p2 in kpn.skeleton_tree:
+    #     h1, w1 = tgt[p1]
+    #     h2, w2 = tgt[p2]
+    #     plt.plot([w1, w2], [-h1, -h2], color='crimson')
+    # plt.plot([0], [0], color='crimson', label='Target')
+    #
+    # # pred drawing
+    # for p1, p2 in kpn.skeleton_tree:
+    #     h1, w1 = pred[p1]
+    #     h2, w2 = pred[p2]
+    #     plt.plot([w1, w2], [-h1, -h2], color='green')
+    # plt.plot([0], [0], color='green', label='Pred')
+    #
+    # for p, key in zip(pred, kpn.key_point_name) :
+    #     h, w = p
+    #     plt.scatter(w, -h, marker='^', color='blue')
+    #     plt.text(w, -h, key)
+    #
+    # for (h_s, w_s), (h, w) in zip(src, tgt) :
+    #     if h_s != -1 and w_s != -1 :
+    #         plt.scatter(w, -h, c = 'g')
+    #     else :
+    #         plt.scatter(w, -h, marker='x', c = 'r')
+
+    # plt.legend()
 
     plt.savefig(path)
     plt.cla()

@@ -11,6 +11,7 @@ from models.bidirectional_lstm_model import Bidirectional_LSTM
 from tools.train_tools import Trainer
 from tools.eval_tools import Evaler
 from options.base_options import Base_option
+from options.transformer_options import Transformer as transformer_option
 from models import create_model
 from options import create_option
 
@@ -18,11 +19,12 @@ import random
 import numpy as np
 
 if __name__ == "__main__":
-    base_opt = Base_option().parse()
-    parser = create_option(base_opt)
+    # base_opt = Base_option().parse()
+    # parser = create_option(base_opt)
+    # opt = parser.parse()
+    # assert opt.mode == 'train', 'mode is not train'
+    parser = transformer_option()
     opt = parser.parse()
-    assert opt.mode == 'train', 'mode is not train'
-
     parser.save()
     opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

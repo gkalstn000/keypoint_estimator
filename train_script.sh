@@ -1,1 +1,5 @@
-python train.py --n_epochs 10000 --model transformer --id 0609-alpha:32,beta:20,limb_agreement --learning_rate 0.005
+#
+python train.py --learning_rate 0.0005 --n_epochs 10000 --model transformer --id 0813_embedding_dim_7_nlayers_7_dkv_6_nheads_6_lambdao_1 --embedding_dim 7 --n_layers 7 --d_k 6 --d_v 6 --n_heads 6 --lambda_o 1
+python train.py --learning_rate 0.0005 --n_epochs 10000 --model transformer --id 0813_embedding_dim_7_nlayers_7_dkv_6_nheads_6_lambdao_10 --embedding_dim 7 --n_layers 7 --d_k 6 --d_v 6 --n_heads 6 --lambda_o 10
+python train.py --learning_rate 0.0005 --n_epochs 10000 --model transformer --id 0813_embedding_dim_7_nlayers_7_dkv_6_nheads_6_lambdao_50 --embedding_dim 7 --n_layers 7 --d_k 6 --d_v 6 --n_heads 6 --lambda_o 50
+python train.py --learning_rate 0.0005 --n_epochs 10000 --model transformer --id 0813_embedding_dim_7_nlayers_7_dkv_6_nheads_6_lambdao_100 --embedding_dim 7 --n_layers 7 --d_k 6 --d_v 6 --n_heads 6 --lambda_o 100

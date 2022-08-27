@@ -37,7 +37,9 @@ class Base_option(object):
         # data params
         parser.add_argument('--alpha', type=float, default=32, help='learning rate')
         parser.add_argument('--beta', type=float, default=20, help='learning rate')
-
+        # loss params
+        parser.add_argument('--lambda_k', type=float, default=1.0, help='learning rate')
+        parser.add_argument('--lambda_o', type=float, default=1.0, help='learning rate')
 
         parser.add_argument('--save_epoch', type=int, default=200, help='model save epoch step')
         parser.add_argument('--print_every', type=int, default=200, help='print loss epoch step')
