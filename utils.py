@@ -15,15 +15,10 @@ def load_train_data(data_path) :
     :return:
     '''
     with open(data_path, 'rb') as f:
-        train = pickle.load(f, encoding='iso-8859-1')
+        data_dict = pickle.load(f, encoding='iso-8859-1')
     train_X = {}
-    for key, val in tqdm(train.items()):
-        count_flag = 0
-        for x, y in val:
-            if not (x > 0 and y > 0):
-                count_flag += 1
-        if count_flag < 3: # 최소 16개의 keypoint가 있는 Pose
-            train_X[key] = [[y, int((x-0) * 176 / 256) if x != -1 else x] for x, y in val] # (x, y) -> (h, w)
+    for key, val in tqdm(data_dict.items()):
+        train_X[key] = [[y, x-40 if x != -1 else x] for x, y in val] # (x, y) -> (h, w)
     return train_X
 
 def load_test_data(data_path) :
@@ -46,8 +41,6 @@ def save_model(opt, epoch, model, optimizer, scheduler, loss, file_name) :
 
     print('saveing model')
     print(f"""
-    epoch : {epoch}
-    loss : {loss / epoch}
     model_state_dict
     optimizer_state_dict
     """)

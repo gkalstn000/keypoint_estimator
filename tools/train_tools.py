@@ -2,12 +2,13 @@ import math
 import time
 
 import torch.nn as nn
-
+import torch
 import utils
 import tools.eval_tools as eval_tools
 from tqdm import trange
 from custom_loss.pose_loss import cal_pose_loss
 from custom_loss.limb_agreement import cal_limb_agreement
+from scores.PCkH_score import pckh_score
 
 class Trainer :
     def __init__(self,
@@ -21,7 +22,8 @@ class Trainer :
                    opt,
                    model_optimizer,
                    scheduler,
-                   dataloader):
+                   train_dl,
+                   valid_dl):
 
         start = time.time()
         plot_total_losses = []
@@ -31,11 +33,14 @@ class Trainer :
         loss_keypoint = 0
         loss_occlusion = 0
 
+
+
         MSE = nn.MSELoss()
         BCE = nn.BCELoss()
         limb_agreement = cal_limb_agreement
         for epoch in trange(opt.epoch, opt.n_epochs+1) :
-            for src, tgt, mid_point, length in dataloader:
+            train_pckh_list = []
+            for src, tgt, mid_point, length in train_dl:
                 self.model.train()
                 src, tgt = src.float(), tgt.float()
                 keypoint_tgt, occlusion_tgt = tgt[:, :, :2], tgt[:, :, 2].unsqueeze(2)
@@ -57,13 +62,29 @@ class Trainer :
 
                 loss.backward()
                 model_optimizer.step()
-
+                if epoch % opt.print_every == 0:
+                    train_pckh_list.append(pckh_score('', keypoint_tgt, keypoint_logits))
             scheduler.step(loss_total / epoch)
 
             if epoch % opt.print_every == 0:
                 print_loss_avg = loss_total / epoch
-                print('%s (%d %d%%) %.4f' % (timeSince(start, epoch / opt.n_epochs),
-                                             epoch, epoch / opt.n_epochs * 100, print_loss_avg))
+                print('%s (%d %d%%)' % (timeSince(start, epoch / opt.n_epochs),
+                                             epoch, epoch / opt.n_epochs * 100))
+
+                self.model.eval()
+                valid_pckh_list = []
+                with torch.no_grad():
+                    for src, tgt, mid_point, length in valid_dl:
+                        src, tgt = src.float(), tgt.float()
+                        keypoint_tgt, occlusion_tgt = tgt[:, :, :2], tgt[:, :, 2].unsqueeze(2)
+                        keypoint_logits, occlusion_logits = self.model(src)
+                        valid_pckh_list.append(pckh_score('', keypoint_tgt, keypoint_logits))
+                train_pckh = torch.mean(torch.Tensor(train_pckh_list))
+                valid_pckh = torch.mean(torch.Tensor(valid_pckh_list))
+                print('Total loss:', round(print_loss_avg, 3))
+                print('Train pckh score:', round(train_pckh.item(), 3))
+                print('Valid pckh score:', round(valid_pckh.item(), 3))
+
 
             if epoch % opt.plot_every == 0:
                 plot_loss_avg = loss_total / epoch

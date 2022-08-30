@@ -31,19 +31,15 @@ if __name__ == "__main__":
     parser.save()
     opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # parser.save()
-    opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
     w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
 
-    data_path = 'dataset/train/pose_label.pkl'
+    data_path = 'dataset/test.pkl'
     print('Make Batch Dataset', end = '...')
     data_dict = utils.load_train_data(data_path)
     src, tgt_with_occlusion, mid_point, length = Make_batch(data_dict, opt).get_batch()
-
-    train_index, test_index = split_data(src, tgt_with_occlusion, mid_point, length)
-
-    mydata = MyDataSet(src[test_index, :, :], tgt_with_occlusion[test_index, :, :], mid_point, length)
+    mydata = MyDataSet(src, tgt_with_occlusion, mid_point, length)
     print('Done!!')
 
     dataloader = Data.DataLoader(mydata, opt.batch_size, True)

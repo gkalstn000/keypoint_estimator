@@ -5,15 +5,16 @@ import numpy as np
 import torch.nn as nn
 from .networks.transformer_network import *
 
-def fc_layer(size_in, size_out, last_layer = False, keep_prob=1):
+def fc_layer(size_in, size_out, keep_prob=0.9):
     linear = nn.Linear(size_in, size_out)
 
     layer = nn.Sequential(
         linear,
         # nn.BatchNorm1d(18),
         nn.Dropout(p=1 - keep_prob),
-        nn.ReLU() if not last_layer else nn.Sigmoid()
+        nn.ReLU()
     )
+
     return layer
 
 class Transformer(nn.Module):
@@ -43,16 +44,25 @@ class Transformer(nn.Module):
         # self.MLM_Regressor = nn.Linear(d_model, self.output_dim)
         self.MLM_Regressor = nn.ModuleList()
         input_ = d_model
-        for output in [self.d_ff, 32, self.output_dim]:
+        for output in [self.d_ff, 32]:
             self.MLM_Regressor.append(fc_layer(input_, output))
             input_ = output
+        layer = nn.Sequential(
+            nn.Linear(input_, self.output_dim),
+            # nn.BatchNorm1d(18),
+        )
+        self.MLM_Regressor.append(layer)
 
         self.Classifier = nn.ModuleList()
         input_ = d_model # embedding*2+1
         for output in [self.d_ff, 32]:
             self.Classifier.append(fc_layer(input_, output))
             input_ = output
-        self.Classifier.append(fc_layer(input_, 1, True))
+        layer = nn.Sequential(
+            nn.Linear(input_, 1),
+            nn.Sigmoid()
+        )
+        self.Classifier.append(layer)
     def forward(self, x):
         if len(x.size()) != 3 :
             x = x.unsqueeze(0)

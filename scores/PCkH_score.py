@@ -1,7 +1,7 @@
 import tqdm
 import pandas as pd
 import json
-
+import torch
 MISSING_VALUE = -1
 
 PARTS_SEL = [0, 1, 14, 15, 16, 17]
@@ -76,23 +76,21 @@ def pckh_score(source, target, prediction) :
     check_threshold = difference <= threshold.unsqueeze(1)
 
     return torch.logical_and(check_threshold[:, :, 0], check_threshold[:, :, 1]).float().mean()
-import torch
-from torch import optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-import torch.utils.data as Data
 
-import util.io
-import utils
-from data.mydata import MyDataSet, Make_batch, split_data
-from models.bidirectional_lstm_model import Bidirectional_LSTM
-from tools.train_tools import Trainer
-from tools.eval_tools import Evaler
-from options.base_options import Base_option
-from models import create_model
-from options import create_option
-import os
+
 
 if __name__ == "__main__":
+    import torch
+    from torch import optim
+    from torch.optim.lr_scheduler import ReduceLROnPlateau
+    import torch.utils.data as Data
+    import utils
+    from data.mydata import MyDataSet, Make_batch, split_data
+    from tools.eval_tools import Evaler
+    from options.base_options import Base_option
+    from models import create_model
+    from options import create_option
+
     base_opt = Base_option().parse()
     parser = create_option(base_opt)
     opt = parser.parse()

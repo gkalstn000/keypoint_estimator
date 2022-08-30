@@ -32,15 +32,20 @@ if __name__ == "__main__":
     h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
     w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
 
-    data_path = 'dataset/train/pose_label.pkl'
+    # data_path = 'dataset/train/pose_label.pkl'
     print('Make Batch Dataset', end = '...')
-    data_dict = utils.load_train_data(data_path)
-    src, tgt_with_occlusion, mid_point, length = Make_batch(data_dict, opt).get_batch()
-    train_index, test_index = split_data(src, tgt_with_occlusion, mid_point, length)
+    train_dict = utils.load_train_data('dataset/train.pkl')
+    src, tgt_with_occlusion, mid_point, length = Make_batch(train_dict, opt).get_batch()
+    train_data = MyDataSet(src, tgt_with_occlusion, mid_point, length)
 
-    mydata = MyDataSet(src[train_index, :, :], tgt_with_occlusion[train_index, :, :], mid_point, length)
+    valid_dict = utils.load_train_data('dataset/valid.pkl')
+    src, tgt_with_occlusion, mid_point, length = Make_batch(valid_dict, opt).get_batch()
+    valid_data = MyDataSet(src, tgt_with_occlusion, mid_point, length)
+
     print('Done!!', end = '...')
-    dataloader = Data.DataLoader(mydata, opt.batch_size, True)
+    train_dl = Data.DataLoader(train_data, opt.batch_size, True)
+    valid_dl = Data.DataLoader(valid_data, opt.batch_size, True)
+
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
     opt.grid_size_tensor = grid_size_tensor
 
@@ -59,7 +64,8 @@ if __name__ == "__main__":
     trainer.trainIters(opt=opt,
                        model_optimizer=model_optimizer,
                        scheduler=scheduler,
-                       dataloader=dataloader)
+                       train_dl=train_dl,
+                       valid_dl=valid_dl)
 
 
 
