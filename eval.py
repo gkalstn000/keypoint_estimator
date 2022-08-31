@@ -35,7 +35,7 @@ if __name__ == "__main__":
     h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
     w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
 
-    data_path = 'dataset/test.pkl'
+    data_path = 'dataset/test_18.pkl'
     print('Make Batch Dataset', end = '...')
     data_dict = utils.load_train_data(data_path)
     src, tgt_with_occlusion, mid_point, length = Make_batch(data_dict, opt).get_batch()

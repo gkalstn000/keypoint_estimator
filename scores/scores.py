@@ -65,9 +65,9 @@ def occlusion_score(occlusion_pred, occlusion_tgt) :
     occlusion_tgt_flat = occlusion_tgt.view(-1, 1).squeeze()
 
     acc_tatal = accuracy_score(occlusion_tgt_flat, occlusion_pred_flat)
-    rec_total = recall_score(occlusion_tgt_flat, occlusion_pred_flat, zero_division = 1)
-    prec_total = precision_score(occlusion_tgt_flat, occlusion_pred_flat, zero_division = 1)
-    f1_total = f1_score(occlusion_tgt_flat, occlusion_pred_flat, zero_division = 1)
+    rec_total = recall_score(occlusion_tgt_flat, occlusion_pred_flat, zero_division = 0)
+    prec_total = precision_score(occlusion_tgt_flat, occlusion_pred_flat, zero_division = 0)
+    f1_total = f1_score(occlusion_tgt_flat, occlusion_pred_flat, zero_division = 0)
 
     acc_list = []
     rec_list = []
@@ -76,9 +76,9 @@ def occlusion_score(occlusion_pred, occlusion_tgt) :
 
     for true, pred in zip(occlusion_tgt.transpose(1, 0), occlusion_pred.transpose(1, 0)) :
         acc = accuracy_score(true, pred)
-        rec = recall_score(true, pred, zero_division = 1)
-        prec = precision_score(true, pred, zero_division = 1)
-        f1 = f1_score(true, pred, zero_division = 1)
+        rec = recall_score(true, pred, zero_division = 0)
+        prec = precision_score(true, pred, zero_division = 0)
+        f1 = f1_score(true, pred, zero_division = 0)
 
         acc_list.append(acc)
         rec_list.append(rec)
