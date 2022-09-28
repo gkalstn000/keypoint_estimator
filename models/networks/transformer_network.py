@@ -30,6 +30,9 @@ class MultiHeadAttention(nn.Module):
         self.W_Q = nn.Linear(d_model, d_k * n_heads)
         self.W_K = nn.Linear(d_model, d_k * n_heads)
         self.W_V = nn.Linear(d_model, d_v * n_heads)
+
+        self.fc = nn.Linear(self.n_heads * self.d_v, self.d_model)
+        self.norm = nn.LayerNorm(self.d_model)
     def forward(self, Q, K, V):
         # q: [batch_size, seq_len, d_model], k: [batch_size, seq_len, d_model], v: [batch_size, seq_len, d_model]
         residual, batch_size = Q, Q.size(0)
@@ -41,8 +44,8 @@ class MultiHeadAttention(nn.Module):
         # context: [batch_size, n_heads, seq_len, d_v], attn: [batch_size, n_heads, seq_len, seq_len]
         context = ScaledDotProductAttention(self.d_k)(q_s, k_s, v_s)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v) # context: [batch_size, seq_len, n_heads, d_v]
-        output = nn.Linear(self.n_heads * self.d_v, self.d_model)(context)
-        return nn.LayerNorm(self.d_model)(output + residual) # output: [batch_size, seq_len, d_model]
+        output = self.fc(context)
+        return self.norm(output + residual) # output: [batch_size, seq_len, d_model]
 
 class PoswiseFeedForwardNet(nn.Module):
     def __init__(self, d_model, d_ff):
