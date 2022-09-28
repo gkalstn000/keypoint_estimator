@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="잠시 비교용 기존 파일 수정">
-      <change beforePath="$PROJECT_DIR$/eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/eval.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/networks/transformer_network.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/networks/transformer_network.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_script.sh" beforeDir="false" afterPath="$PROJECT_DIR$/train_script.sh" afterDir="false" />
-    </list>
+    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="잠시 비교용 기존 파일 수정" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -234,7 +230,7 @@
       <workItem from="1663238391716" duration="2716000" />
       <workItem from="1663294110280" duration="201000" />
       <workItem from="1663847961032" duration="598000" />
-      <workItem from="1664350131548" duration="1663000" />
+      <workItem from="1664350131548" duration="2332000" />
     </task>
     <task id="LOCAL-00001" summary="plot 좀더 자세하게 찍히도록 수정">
       <created>1654183372561</created>
