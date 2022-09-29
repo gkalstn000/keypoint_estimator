@@ -71,6 +71,7 @@ class Embedding(nn.Module):
         self.pos_embed = nn.Embedding(self.max_len, input_size)  # 18 position embedding
 
         self.norm = nn.LayerNorm(input_size)
+        self.pos = torch.arange(self.max_len)
 
     def forward(self, x, grid_size_tensor):
         # key point embedding
@@ -80,9 +81,9 @@ class Embedding(nn.Module):
         w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
         point_embedding = torch.cat([h_embedding, w_embedding, unknown_index.unsqueeze(2)], dim = 2)
         # pos embedding
-        pos = torch.arange(self.max_len)
-        pos = pos.unsqueeze(0).repeat(x.size(0), 1)  # [seq_len] -> [batch_size, seq_len]
-        pos_embedding = self.pos_embed(pos)
+
+        pos = self.pos.unsqueeze(0).repeat(x.size(0), 1)  # [seq_len] -> [batch_size, seq_len]
+        pos_embedding = self.pos_embed(pos.to(x.device.type))
         embedding = point_embedding + pos_embedding
         return self.norm(embedding)
 

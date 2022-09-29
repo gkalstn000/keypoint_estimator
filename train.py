@@ -47,7 +47,7 @@ if __name__ == "__main__":
     valid_dl = Data.DataLoader(valid_data, opt.batch_size, True)
 
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
-    opt.grid_size_tensor = grid_size_tensor
+    opt.grid_size_tensor = grid_size_tensor.to(opt.device)
 
     model = create_model(opt)
     model_optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate)

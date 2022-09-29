@@ -30,7 +30,7 @@ class Base_option(object):
         parser.add_argument('--w_grid', type=int, default=100, help='number of height embedding')
         # training params
         parser.add_argument('--mode', type=str, default='train', help='set mode [train/test]')
-        parser.add_argument('--batch_size', type=int, default=256, help='batch_size')
+        parser.add_argument('--batch_size', type=int, default=2048, help='batch_size')
         parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate')
         parser.add_argument('--n_epochs', type=int, default=200, help='number of epoch')
         parser.add_argument('--continue_train', action='store_true', help='continue_training')

@@ -15,7 +15,7 @@ class Trainer :
                  opt,
                  model):
         self.opt = opt
-        self.model = model
+        self.model = model.to(opt.device)
         self.device = opt.device
 
     def trainIters(self,
@@ -40,9 +40,17 @@ class Trainer :
         limb_agreement = cal_limb_agreement
         for epoch in trange(opt.epoch, opt.n_epochs+1) :
             train_pckh_list = []
+            self.model.train()
             for src, tgt, mid_point, length in train_dl:
-                self.model.train()
                 src, tgt = src.float(), tgt.float()
+
+                src = src.to(opt.device)
+                tgt = tgt.to(opt.device)
+                mid_point = mid_point.to(opt.device)
+                length = length.to(opt.device)
+
+
+
                 keypoint_tgt, occlusion_tgt = tgt[:, :, :2], tgt[:, :, 2].unsqueeze(2)
                 visible_index = occlusion_tgt.squeeze() != 1
                 model_optimizer.zero_grad()
@@ -76,6 +84,12 @@ class Trainer :
                 with torch.no_grad():
                     for src, tgt, mid_point, length in valid_dl:
                         src, tgt = src.float(), tgt.float()
+
+                        src = src.to(opt.device)
+                        tgt = tgt.to(opt.device)
+                        mid_point = mid_point.to(opt.device)
+                        length = length.to(opt.device)
+
                         keypoint_tgt, occlusion_tgt = tgt[:, :, :2], tgt[:, :, 2].unsqueeze(2)
                         keypoint_logits, occlusion_logits = self.model(src)
                         valid_pckh_list.append(pckh_score('', keypoint_tgt, keypoint_logits))

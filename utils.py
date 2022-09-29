@@ -52,6 +52,7 @@ def save_model(opt, epoch, model, optimizer, scheduler, loss, file_name) :
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict(),
                 'loss': loss}, latest_file_path)
+    model.to(opt.device)
 
 def load_model(opt, model, optimizer, scheduler) :
     if not opt.continue_train and opt.mode == 'train' :
