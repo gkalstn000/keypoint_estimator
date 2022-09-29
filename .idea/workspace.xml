@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="잠시 비교용 기존 파일 수정" />
+    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="잠시 비교용 기존 파일 수정">
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/keypoint_estimator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/keypoint_estimator.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/test.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/test/fasion-annotation-test.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/test_18.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/train.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/train/pose_label.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/valid.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/options/base_options.py" beforeDir="false" afterPath="$PROJECT_DIR$/options/base_options.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,7 +49,8 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Volumes/msha/keypoint_estimator&quot;
+    &quot;last_opened_file_path&quot;: &quot;/Users/minsuha/keypoint_estimator&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.language&quot;
   }
 }</component>
   <component name="RecentsManager">
@@ -231,6 +244,11 @@
       <workItem from="1663294110280" duration="201000" />
       <workItem from="1663847961032" duration="598000" />
       <workItem from="1664350131548" duration="2332000" />
+      <workItem from="1664417107902" duration="905000" />
+      <workItem from="1664424987885" duration="62000" />
+      <workItem from="1664425096041" duration="12000" />
+      <workItem from="1664425238408" duration="72000" />
+      <workItem from="1664425326548" duration="5243000" />
     </task>
     <task id="LOCAL-00001" summary="plot 좀더 자세하게 찍히도록 수정">
       <created>1654183372561</created>
@@ -300,6 +318,9 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="requirements.txt" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">

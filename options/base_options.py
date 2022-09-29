@@ -21,7 +21,7 @@ class Base_option(object):
         # path params
         parser.add_argument('--id', type=str, default='default', help='experiment ID. the experiment dir will be set as "./checkpoint/id/"')
         parser.add_argument('--model_name', type=str, default='model_param_latest', help='load model params with file name')
-        parser.add_argument('--model', type=str, default='bidirectional_lstm', help='[bidirectional_lstm, transformer, gan]')
+        parser.add_argument('--model', type=str, default='transformer', help='[bidirectional_lstm, transformer, gan]')
 
         # input params
         parser.add_argument('--height', type=int, default=256, help='height of image')
