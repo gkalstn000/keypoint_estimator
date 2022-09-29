@@ -7,19 +7,16 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import key_point_name as kpn
+import pandas as pd
 
 def load_train_data(data_path) :
     '''
-    좌표가 반대로(x, y) 저장되어있음. 바꿔서(h, w) 사용하기
-    :param data_path:
+    Load keypoint DataFrame
+    :param data_path
     :return:
     '''
-    with open(data_path, 'rb') as f:
-        data_dict = pickle.load(f, encoding='iso-8859-1')
-    train_X = {}
-    for key, val in tqdm(data_dict.items()):
-        train_X[key] = [[y, x-40 if x != -1 else x] for x, y in val] # (x, y) -> (h, w)
-    return train_X
+
+    return pd.read_csv(data_path, sep=':')
 
 def load_test_data(data_path) :
     df = pd.read_csv(data_path, sep=':')

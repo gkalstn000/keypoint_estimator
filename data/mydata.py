@@ -1,6 +1,7 @@
 import torch.utils.data as Data
 import numpy as np
 from numpy import random
+import json
 
 np.random.seed(seed=100)
 import matplotlib.pyplot as plt
@@ -24,21 +25,36 @@ class MyDataSet(Data.Dataset) :
         return self.tgt.shape[0]
     def __getitem__(self, idx):
         return self.src[idx], self.tgt[idx], self.mid_point, self.length
-
+def df_to_array(df):
+    data_list = []
+    for index, (keypoints_y, keypoints_x, label) in df.iterrows():
+        keypoints_y = json.loads(keypoints_y)
+        keypoints_x = json.loads(keypoints_x)
+        label = json.loads(label)
+        data_list.append([[h, w, l] for h, w, l in zip(keypoints_y, keypoints_x, label)])
+    return np.array(data_list)
 class Make_batch:
-    def __init__(self, data_dict, opt):
-        self.file_name = list(data_dict.keys())
-        self.key_points = np.array(list(data_dict.values()))
+    def __init__(self, data_df, opt):
+        self.data_array = df_to_array(data_df)
         self.height = opt.height
         self.width = opt.width
 
         self.alpha = opt.alpha
         self.beta = opt.beta
+        self.opt = opt
+
+
 
     def get_batch(self):
+        self.key_points = self.data_array[:, :, :2]
+
+
         R, R_inv, T = self.affine_matrix_batch()
+
+
+
         # occlusion 좌표 index
-        occlusion_index = (self.key_points == np.array([-1, -1]))[:, :, 0]
+        occlusion_index = self.data_array[:, :,2]
 
 
         scaling = self.key_points @ R_inv
