@@ -45,8 +45,9 @@ class AttnDecoderRNN(nn.Module):
     def initHidden(self, batch_size = 1):
         return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
 
-import utils
-from models.bidirectional_lstm_model import Bidirectional_LSTM
+
+from util import util
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == '__main__' :
     data_path = 'dataset/train/pose_label.pkl'

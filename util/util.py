@@ -1,6 +1,3 @@
-import pickle
-from tqdm import tqdm
-import pandas as pd
 import json
 import torch
 import os
@@ -8,6 +5,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import key_point_name as kpn
 import pandas as pd
+
+def mkdirs(paths):
+    if isinstance(paths, list) and not isinstance(paths, str):
+        for path in paths:
+            mkdir(path)
+    else:
+        mkdir(paths)
+def mkdir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def load_train_data(data_path) :
     '''
@@ -113,34 +139,6 @@ def plot_key_points(src, tgt, pred, occ_true, occ_pred, path) :
         else :
             plt.scatter(w + 150, -h, marker='^', color='red')
         plt.text(w+150, -h, key)
-
-    #
-    # # tgt drawing
-    # for p1, p2 in kpn.skeleton_tree:
-    #     h1, w1 = tgt[p1]
-    #     h2, w2 = tgt[p2]
-    #     plt.plot([w1, w2], [-h1, -h2], color='crimson')
-    # plt.plot([0], [0], color='crimson', label='Target')
-    #
-    # # pred drawing
-    # for p1, p2 in kpn.skeleton_tree:
-    #     h1, w1 = pred[p1]
-    #     h2, w2 = pred[p2]
-    #     plt.plot([w1, w2], [-h1, -h2], color='green')
-    # plt.plot([0], [0], color='green', label='Pred')
-    #
-    # for p, key in zip(pred, kpn.key_point_name) :
-    #     h, w = p
-    #     plt.scatter(w, -h, marker='^', color='blue')
-    #     plt.text(w, -h, key)
-    #
-    # for (h_s, w_s), (h, w) in zip(src, tgt) :
-    #     if h_s != -1 and w_s != -1 :
-    #         plt.scatter(w, -h, c = 'g')
-    #     else :
-    #         plt.scatter(w, -h, marker='x', c = 'r')
-
-    # plt.legend()
 
     plt.savefig(path)
     plt.cla()

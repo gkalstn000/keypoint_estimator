@@ -3,10 +3,9 @@ import time
 
 import torch.nn as nn
 import torch
-import utils
+from util import util
 import tools.eval_tools as eval_tools
 from tqdm import trange
-from custom_loss.pose_loss import cal_pose_loss
 from custom_loss.limb_agreement import cal_limb_agreement
 from scores.PCkH_score import pckh_score
 

@@ -1,7 +1,3 @@
-import tqdm
-import pandas as pd
-import json
-import torch
 MISSING_VALUE = -1
 
 PARTS_SEL = [0, 1, 14, 15, 16, 17]
@@ -84,8 +80,8 @@ if __name__ == "__main__":
     from torch import optim
     from torch.optim.lr_scheduler import ReduceLROnPlateau
     import torch.utils.data as Data
-    import utils
-    from data.mydata import MyDataSet, Make_batch, split_data
+    from util import util
+    from data.ochfashion_dataset import MyDataSet, Make_batch, split_data
     from tools.eval_tools import Evaler
     from options.base_options import Base_option
     from models import create_model

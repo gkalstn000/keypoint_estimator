@@ -6,19 +6,15 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.utils.data as Data
 
 import util.io
-import utils
-from data.mydata import MyDataSet, Make_batch, split_data
-from models.bidirectional_lstm_model import Bidirectional_LSTM
-from tools.train_tools import Trainer
+from util import util
+from data.ochfashion_dataset import MyDataSet, Make_batch
 from tools.eval_tools import Evaler
-from options.base_options import Base_option
 from options.transformer_options import Transformer as transformer_option
 
 from models import create_model
-from options import create_option
 import os
 import scores.scores as scores
-from tqdm import tqdm, trange
+from tqdm import trange
 
 if __name__ == "__main__":
     # base_opt = Base_option().parse()

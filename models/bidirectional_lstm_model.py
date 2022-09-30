@@ -1,9 +1,8 @@
 import torch.nn as nn
 import torch
-import torch.nn.functional as F
 import torch.utils.data as Data
 
-from data.mydata import MyDataSet
+from data.ochfashion_dataset import MyDataSet
 
 class Bidirectional_LSTM(nn.Module):
     def __init__(self, opt):
@@ -44,8 +43,8 @@ class Bidirectional_LSTM(nn.Module):
         return output
 
 
+from util import util
 
-import utils
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == '__main__' :
     height = 256

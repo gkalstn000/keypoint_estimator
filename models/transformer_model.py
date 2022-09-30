@@ -1,8 +1,3 @@
-import re
-import math
-import torch
-import numpy as np
-import torch.nn as nn
 from .networks.transformer_network import *
 
 def fc_layer(size_in, size_out, keep_prob=0.9):

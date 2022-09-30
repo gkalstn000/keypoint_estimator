@@ -1,4 +1,3 @@
-import re
 import math
 import torch
 import numpy as np
@@ -99,8 +98,8 @@ class EncoderLayer(nn.Module):
         return enc_outputs
 
 from options.transformer_options import Transformer
-import utils
-from data.mydata import MyDataSet, Make_batch, split_data
+from util import util
+from data.ochfashion_dataset import MyDataSet, Make_batch, split_data
 import torch.utils.data as Data
 
 if __name__ == '__main__' :
