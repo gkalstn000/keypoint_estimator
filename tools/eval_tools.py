@@ -1,13 +1,10 @@
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
-import matplotlib.ticker as ticker
-import matplotlib.dates as mdates
 
 import numpy as np
-import random
 import torch
 from tqdm import tqdm
-import utils
+from util import util
 import key_point_name as kpn
 import pandas as pd
 import os
@@ -142,7 +139,7 @@ class Evaler :
 
         return torch.where(up_scale > max_point, unknown, up_scale)
 
-from data.mydata import MyDataSet
+from data.ochfashion_dataset import MyDataSet
 import torch.utils.data as Data
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from models.bidirectional_lstm_model import Bidirectional_LSTM

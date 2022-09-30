@@ -1,6 +1,4 @@
-import torch
-import torch.nn as nn
-from utils import single_plot_key_points
+from util.util import single_plot_key_points
 
 def cal_pose_loss(output, target) :
     output_energy = get_energy(output)
@@ -57,8 +55,8 @@ def get_relationship(points, vector) :
 import torch
 import torch.utils.data as Data
 
-import utils
-from data.mydata import MyDataSet, Make_batch, split_data
+from util import util
+from data.ochfashion_dataset import MyDataSet, Make_batch, split_data
 from options.base_options import Base_option
 from options import create_option
 
