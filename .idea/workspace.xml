@@ -1,18 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="잠시 비교용 기존 파일 수정">
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/keypoint_estimator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/keypoint_estimator.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="OCHuman dataset 추가&#10;&#10;기존 Fashion dataset + OCHuman dataset 합친 후 train, test, valid dataset으로 나눔">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/test.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/test/fasion-annotation-test.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/test_18.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/train.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/train/pose_label.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/valid.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/options/base_options.py" beforeDir="false" afterPath="$PROJECT_DIR$/options/base_options.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -248,7 +238,7 @@
       <workItem from="1664424987885" duration="62000" />
       <workItem from="1664425096041" duration="12000" />
       <workItem from="1664425238408" duration="72000" />
-      <workItem from="1664425326548" duration="5243000" />
+      <workItem from="1664425326548" duration="6068000" />
     </task>
     <task id="LOCAL-00001" summary="plot 좀더 자세하게 찍히도록 수정">
       <created>1654183372561</created>
@@ -313,7 +303,14 @@
       <option name="project" value="LOCAL" />
       <updated>1661913742334</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="OCHuman dataset 추가&#10;&#10;기존 Fashion dataset + OCHuman dataset 합친 후 train, test, valid dataset으로 나눔">
+      <created>1664456420448</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1664456420448</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -343,7 +340,8 @@
     <MESSAGE value="data 바꿔서 save 되던거 수정" />
     <MESSAGE value="잡다한 버그 수정완료&#10;* train, test, valid 분리&#10;* valid score train시 표시 등등" />
     <MESSAGE value="잠시 비교용 기존 파일 수정" />
-    <option name="LAST_COMMIT_MESSAGE" value="잠시 비교용 기존 파일 수정" />
+    <MESSAGE value="OCHuman dataset 추가&#10;&#10;기존 Fashion dataset + OCHuman dataset 합친 후 train, test, valid dataset으로 나눔" />
+    <option name="LAST_COMMIT_MESSAGE" value="OCHuman dataset 추가&#10;&#10;기존 Fashion dataset + OCHuman dataset 합친 후 train, test, valid dataset으로 나눔" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
