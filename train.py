@@ -34,12 +34,12 @@ if __name__ == "__main__":
 
     # data_path = 'dataset/train/pose_label.pkl'
     print('Make Batch Dataset', end = '...')
-    train_dict = utils.load_train_data('dataset/train.pkl')
-    src, tgt_with_occlusion, mid_point, length = Make_batch(train_dict, opt).get_batch()
+    train_df = utils.load_train_data('dataset/train_annotation.csv')
+    src, tgt_with_occlusion, mid_point, length = Make_batch(train_df, opt).get_batch()
     train_data = MyDataSet(src, tgt_with_occlusion, mid_point, length)
 
-    valid_dict = utils.load_train_data('dataset/valid.pkl')
-    src, tgt_with_occlusion, mid_point, length = Make_batch(valid_dict, opt).get_batch()
+    valid_df = utils.load_train_data('dataset/valid_annotation.csv')
+    src, tgt_with_occlusion, mid_point, length = Make_batch(valid_df, opt).get_batch()
     valid_data = MyDataSet(src, tgt_with_occlusion, mid_point, length)
 
     print('Done!!', end = '...')
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     valid_dl = Data.DataLoader(valid_data, opt.batch_size, True)
 
     grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
-    opt.grid_size_tensor = grid_size_tensor
+    opt.grid_size_tensor = grid_size_tensor.to(opt.device)
 
     model = create_model(opt)
     model_optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate)

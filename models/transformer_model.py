@@ -66,7 +66,7 @@ class Transformer(nn.Module):
     def forward(self, x):
         if len(x.size()) != 3 :
             x = x.unsqueeze(0)
-        output = self.embedding(x, self.grid_size_tensor) # [bach_size, seq_len, d_model]
+        output = self.embedding(x, self.grid_size_tensor.to(x.device.type)) # [bach_size, seq_len, d_model]
 
         for layer in self.layers:
             # output: [batch_size, max_len, d_model]

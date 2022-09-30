@@ -42,12 +42,14 @@ class Evaler :
         self.model = model
         self.device = opt.device
         self.dataloader = dataloader
+        self.opt = opt
 
     def print_points(self, sources, targets, predictions, key_point_name):
         strFormat = '%-12s%-12s%-12s%-12s\n'
         strOut = strFormat % ('Name', 'Source', 'Target', 'Pred')
         for src, tgt, pred in zip(sources, targets, predictions) :
             for name, src_p, tgt_p, pred_ in zip(key_point_name, src.int(), tgt.int(), pred.int()) :
+
                 strOut += strFormat % (name, src_p.tolist(), tgt_p.tolist(), pred_.tolist())
             strOut += '-'*50+'\n'
         print(strOut)
@@ -70,11 +72,21 @@ class Evaler :
 
         for src, tgt, mid_point, length in tqdm(self.dataloader):
             src, tgt, mid_point, length = src.float(), tgt.float(), mid_point.float(), length.float()
+
+            src = src.to(self.opt.device)
+            tgt = tgt.to(self.opt.device)
+            mid_point = mid_point.to(self.opt.device)
+            length = length.to(self.opt.device)
+
             # pred 계산
             keypoint_logits, occlusion_logits = self.evaluate(point=src)
             occlusion_logits = (occlusion_logits > 0.5) * 1
             keypoint_tgt, occlusion_tgt = tgt[:, :, :2], tgt[:, :, 2]
-            src_denorm = self.denormalization(src[:, :, :-1], mid_point, length)
+            src_denorm = self.denormalization(src[:, :, :-1].cpu(), mid_point.cpu(), length.cpu())
+
+            src_denorm, keypoint_tgt, keypoint_logits, occlusion_logits, occlusion_tgt = src_denorm.cpu(), keypoint_tgt.cpu(), keypoint_logits.cpu(), occlusion_logits.cpu(), occlusion_tgt.cpu()
+
+
             # image 출력을 위한 append
             srcs.append(src_denorm)
             tgts.append(keypoint_tgt)

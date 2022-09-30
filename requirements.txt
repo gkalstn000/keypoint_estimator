@@ -1,6 +1,10 @@
-numpy
-pandas
-Pillow
-tqdm
-jupyter
-matplotlib
+# jupyter
+# matplotlib
+# numpy
+# pandas
+# Pillow
+# scikit-learn
+# scipy
+# sklearn
+# tqdm
+

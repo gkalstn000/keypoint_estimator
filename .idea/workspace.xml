@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="OCHuman dataset 추가&#10;&#10;기존 Fashion dataset + OCHuman dataset 합친 후 train, test, valid dataset으로 나눔">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+=======
+    <list default="true" id="a4db3a2c-75a0-42f0-9d5f-348f27f31e8f" name="Changes" comment="잠시 비교용 기존 파일 수정">
+<<<<<<< HEAD
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+=======
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/keypoint_estimator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/keypoint_estimator.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/test.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/test/fasion-annotation-test.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/test_18.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/train.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/train/pose_label.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/valid.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/options/base_options.py" beforeDir="false" afterPath="$PROJECT_DIR$/options/base_options.py" afterDir="false" />
+>>>>>>> 38bc58c22d14e27445a0d4b172d4729e2b0a4e98
+>>>>>>> ca178b78e9e09def89c52f106b3bfcf34889ccf1
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -233,12 +252,20 @@
       <workItem from="1663238391716" duration="2716000" />
       <workItem from="1663294110280" duration="201000" />
       <workItem from="1663847961032" duration="598000" />
+<<<<<<< HEAD
+      <workItem from="1664350131548" duration="3173000" />
+=======
       <workItem from="1664350131548" duration="2332000" />
       <workItem from="1664417107902" duration="905000" />
       <workItem from="1664424987885" duration="62000" />
       <workItem from="1664425096041" duration="12000" />
       <workItem from="1664425238408" duration="72000" />
+<<<<<<< HEAD
       <workItem from="1664425326548" duration="6068000" />
+=======
+      <workItem from="1664425326548" duration="5243000" />
+>>>>>>> 38bc58c22d14e27445a0d4b172d4729e2b0a4e98
+>>>>>>> ca178b78e9e09def89c52f106b3bfcf34889ccf1
     </task>
     <task id="LOCAL-00001" summary="plot 좀더 자세하게 찍히도록 수정">
       <created>1654183372561</created>
