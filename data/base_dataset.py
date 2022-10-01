@@ -14,6 +14,11 @@ class BaseDataset(data.Dataset):
         return parser
 
     def initialize(self, opt):
+        '''
+        Path setting, Load dataframe file,
+        :param opt:
+        :return:
+        '''
         pass
 
 def df_to_array(df):

@@ -7,11 +7,6 @@ np.random.seed(seed=100)
 import torch.utils.data as Data
 import torch
 
-def set_random(seed = 1004) :
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
-
 class MyDataSet(Data.Dataset) :
     def __init__(self, src, tgt, mid_point, length):
         self.src = src
@@ -117,19 +112,6 @@ class Make_batch:
 
 def denormalization(points, mid_point, length) :
     return (points * length) / 2 + mid_point
-
-def split_data(src, tgt, mid_point, length) :
-    set_random()
-    length = src.shape[0]
-    test_ratio = 0.3
-
-    total_index = np.arange(length)
-    np.random.shuffle(total_index)
-
-    train_index = total_index[int(length*test_ratio):]
-    test_index = total_index[:int(length*test_ratio)]
-
-    return train_index, test_index
 
 
 from util import util

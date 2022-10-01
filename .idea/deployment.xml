@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="ailab" confirmBeforeDeletion="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="ailab@166.104.232.127:7001 password" confirmBeforeDeletion="false">
     <option name="confirmBeforeDeletion" value="false" />
     <serverData>
-      <paths name="ailab">
+      <paths name="ailab@166.104.232.127:7001 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/Desktop/msha/KPE" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/ailab/Desktop/msha/KPE" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
