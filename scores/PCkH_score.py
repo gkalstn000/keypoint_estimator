@@ -81,7 +81,7 @@ if __name__ == "__main__":
     from torch.optim.lr_scheduler import ReduceLROnPlateau
     import torch.utils.data as Data
     from util import util
-    from data.ochfashion_dataset import MyDataSet, Make_batch, split_data
+    from data.tmp_dataset import MyDataSet, Make_batch, split_data
     from tools.eval_tools import Evaler
     from options.base_options import Base_option
     from models import create_model

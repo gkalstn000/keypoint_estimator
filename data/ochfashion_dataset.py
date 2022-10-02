@@ -1,151 +1,58 @@
+import os
 import numpy as np
-from numpy import random
-import json
-
-np.random.seed(seed=100)
-
-import torch.utils.data as Data
-import torch
-
-def set_random(seed = 1004) :
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
-
-class MyDataSet(Data.Dataset) :
-    def __init__(self, src, tgt, mid_point, length):
-        self.src = src
-        self.tgt = tgt
-        self.mid_point = mid_point
-        self.length = length
-
-    def __len__(self):
-        return self.tgt.shape[0]
-    def __getitem__(self, idx):
-        return self.src[idx], self.tgt[idx], self.mid_point, self.length
-
-class Make_batch:
-    def __init__(self, data_df, opt):
-        self.data_array = df_to_array(data_df)
-        self.height = opt.height
-        self.width = opt.width
-
-        self.alpha = opt.alpha
-        self.beta = opt.beta
-        self.opt = opt
-
-
-
-    def get_batch(self):
-        self.key_points = self.data_array[:, :, :2]
-
-
-        R, R_inv, T = self.affine_matrix_batch()
-
-
-
-        # occlusion 좌표 index
-        occlusion_index = self.data_array[:, :,2]
-
-
-        scaling = self.key_points @ R_inv
-        moving = R_inv @ np.expand_dims(T, axis=2)
-        tgt = scaling - moving.transpose(0, 2, 1)  # (B, L, 2)
-        tgt[occlusion_index] = np.array([self.height + 1, self.width + 1])
-        # Normalization을 위한 values
-        max_point = np.array([[self.height, self.width]])
-        min_point = np.array([[0, 0]])
-        mid_point = (max_point + min_point) / 2
-        length = max_point - min_point
-
-        cond1 = tgt > max_point.squeeze()
-        cond2 = tgt < min_point.squeeze()
-
-        cond1_logical = np.logical_or(cond1[:, :, 0], cond1[:, :, 1])
-        cond2_logical = np.logical_or(cond2[:, :, 0], cond2[:, :, 1])
-
-        unknown_index = np.logical_or(cond1_logical, cond2_logical)
-        # 없애면 1, 안 없애면 0
-        unknown_token = np.expand_dims(unknown_index, axis = 2)
-
-        src = tgt.copy()
-        src[unknown_index] = np.array([self.height + 1, self.width + 1])
-        src[occlusion_index] = np.array([self.height + 1, self.width + 1])
-        src_norm = (src-mid_point) * 2 / length
-        tgt_with_occlusion = np.concatenate((tgt, np.expand_dims(occlusion_index, 2)), axis = 2)
-        return src_norm, tgt_with_occlusion, mid_point, length
-
-
-    def affine_matrix_batch(self):
-
-        Rs, R_invs, Ts = [], [], []
-        for _ in range(self.key_points.shape[0]):
-            R, R_inv, T = self.affine_matrix()
-            Rs.append(R)
-            R_invs.append(R_inv)
-            Ts.append(T)
-
-        R = np.stack(Rs, axis=0)
-        R_inv = np.stack(R_invs, axis=0)
-        T = np.stack(Ts, axis=0)
-
-        return R, R_inv, T
-
-    def affine_matrix(self):
-        h_blank = self.height / 10
-        w_blank = self.width / 10
-        while True:
-            h_scale, w_scale = random.beta(self.alpha, self.beta, size=2)
-            h_move = random.uniform(0, (1 - h_scale) * self.height)
-            w_move = random.uniform(0, (1 - w_scale) * self.width)
-
-            R = np.array([[h_scale, 0],
-                          [0, w_scale]])
-            T = np.array([h_move, w_move])
-
-            R_inv = np.linalg.inv(R)
-
-            x_max = np.array([self.height, self.width])
-            max_transform = R @ x_max + T
-
-            if max_transform[0] + h_blank < self.height and max_transform[1] + w_blank < self.width:
-                break
-
-        return R, R_inv, T
-
-
-
-def denormalization(points, mid_point, length) :
-    return (points * length) / 2 + mid_point
-
-def split_data(src, tgt, mid_point, length) :
-    set_random()
-    length = src.shape[0]
-    test_ratio = 0.3
-
-    total_index = np.arange(length)
-    np.random.shuffle(total_index)
-
-    train_index = total_index[int(length*test_ratio):]
-    test_index = total_index[:int(length*test_ratio)]
-
-    return train_index, test_index
-
-
+from data.base_dataset import BaseDataset, df_to_array, make_affine_params_batch, get_affine_params
 from util import util
 
-if __name__ == '__main__' :
-    data_path = 'dataset/train/pose_label.pkl'
-    data_dict = utils.load_train_data(data_path)
+class OCHFashionDataset(BaseDataset) :
+    @staticmethod
+    def modify_commandline_options(parser, is_train):
+        parser.add_argument('--affine_alpha', type=float, default=32, help='learning rate')
+        parser.add_argument('--affine_beta', type=float, default=20, help='learning rate')
+        return parser
 
-    height = 256
-    width = 256
+    def initialize(self, opt):
+        self.keypoint, self.occlusion_label = self.get_data(opt)
+        size = len(self.keypoint)
+        self.dataset_size = size
+        # affine params
+        self.max_height = opt.max_height
+        self.max_wigth = opt.max_width
+        self.affine_alpha = opt.affine_alpha
+        self.affine_beta = opt.affine_beta
+    def get_data(self, opt):
+        root = os.path.join(opt.dataroot, opt.dataset_mode)
+        phase = opt.phase
+        df = util.load_df(os.path.join(root, f'{phase}_annotation.csv'))
+        data = df_to_array(df)
+        keypoint, occlusion_label = data[:, :, :2], data[:, :, 2]
+        return keypoint, occlusion_label
 
-    mydata = MyDataSet(data_dict, height, width)
-    batch_size = 10
-    dataloader = Data.DataLoader(mydata, batch_size, True)
+    def __getitem__(self, index):
+        keypoint = self.keypoint[index]
+        occlusion_label = self.occlusion_label[index]
+        R, R_inv, T = get_affine_params(self.max_height, self.max_wigth, self.affine_alpha, self.affine_beta)
+        # Inverse Affine transformation으로, keypoint -> target_keypoint generate
+        target_keypoint = keypoint @ R_inv - R_inv @ T
+        target_keypoint[occlusion_label == 1] = np.nan
 
-    # for src, tgt, mid_point, length in dataloader :
-    #     print(src)
-    #     print(tgt)
-    #     break
+        max_point = np.array([self.max_height - 1, self.max_wigth - 1])
+        min_point = np.array([0, 0])
+        # Invalid Source keypoint condition
+        over_cond = (target_keypoint > max_point).any(axis = -1)
+        under_cond = (target_keypoint < min_point).any(axis = -1)
+        croppd_cond = over_cond | under_cond
+        # generate source keypoint from target keypoint
+        source_keypoint = target_keypoint.copy()
+        source_keypoint[croppd_cond] = np.nan
+        # Normalize Source keypoint [0, 1] <--Min-Max norm
+        source_keypoint /= max_point
+
+        input_dict = {'source_keypoint': source_keypoint,
+                      'target_keypoint': target_keypoint,
+                      'occlusion_label': occlusion_label,
+                      'croppd_label': croppd_cond}
+
+        return input_dict
+
+    def __len__(self):
+        return self.dataset_size

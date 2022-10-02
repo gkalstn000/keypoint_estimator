@@ -99,7 +99,7 @@ class EncoderLayer(nn.Module):
 
 from options.transformer_options import Transformer
 from util import util
-from data.ochfashion_dataset import MyDataSet, Make_batch, split_data
+from data.tmp_dataset import MyDataSet, Make_batch, split_data
 import torch.utils.data as Data
 
 if __name__ == '__main__' :

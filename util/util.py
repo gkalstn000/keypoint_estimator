@@ -16,7 +16,8 @@ def mkdir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-
+def load_df(path) :
+    return pd.read_csv(path, sep=':')
 
 
 

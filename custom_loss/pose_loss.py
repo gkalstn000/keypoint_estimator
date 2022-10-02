@@ -56,7 +56,7 @@ import torch
 import torch.utils.data as Data
 
 from util import util
-from data.ochfashion_dataset import MyDataSet, Make_batch, split_data
+from data.tmp_dataset import MyDataSet, Make_batch, split_data
 from options.base_options import Base_option
 from options import create_option
 
