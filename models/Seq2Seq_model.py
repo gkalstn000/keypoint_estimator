@@ -45,34 +45,3 @@ class AttnDecoderRNN(nn.Module):
     def initHidden(self, batch_size = 1):
         return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
 
-
-from util import util
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-if __name__ == '__main__' :
-    data_path = 'dataset/train/pose_label.pkl'
-    data = utils.load_train_data(data_path)
-
-    key_points = data.values()
-    key_points = list(key_points)[:10]
-    input_length = len(key_points)
-    max_length = 19
-    hidden_size = 10
-    input_size = 2
-    output_size = 2
-
-    # Encoder
-    EOS = torch.Tensor([0, 0])
-    input_tensor = torch.Tensor(key_points)
-    input_tensor = torch.cat((input_tensor, EOS.repeat((10, 1, 1))), dim=1)
-    encoder = EncoderRNN(input_size, hidden_size, device)
-    encoder_hidden = encoder.initHidden(input_length)
-
-    encoder_output, encoder_hidden = encoder(input_tensor, encoder_hidden)
-
-
-    decoder = AttnDecoderRNN(hidden_size, output_size, max_length, device)
-    decoder_hidden = encoder_hidden
-    input = torch.Tensor([-1, -1]) # SOS_token
-    input = input.repeat(2, 1)
-    decoder(input, decoder_hidden, encoder_output)

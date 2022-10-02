@@ -1,3 +1,5 @@
+import torch
+
 def cal_limb_agreement(output, target) :
     output_directions = get_direction_vector(output)
     target_directions = get_direction_vector(target)

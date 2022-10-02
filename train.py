@@ -6,7 +6,6 @@ import torch.utils.data as Data
 # =========== Import Option modules ===========
 from options.train_options import TrainOptions
 # =========== Import Dataset modules ===========
-from data.tmp_dataset import MyDataSet, Make_batch
 import data
 # =========== Import Models ===========
 from models import create_model

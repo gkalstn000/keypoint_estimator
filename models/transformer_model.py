@@ -78,30 +78,3 @@ class Transformer(nn.Module):
             occlusion_logits = linear(occlusion_logits)
 
         return keypoint_logits, occlusion_logits
-
-if __name__ == '__main__' :
-    parser = Transformer()
-    opt = parser.parse()
-    parser.save()
-    opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-    h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
-    w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
-
-    data_path = 'dataset/train/pose_label.pkl'
-    print('Make Batch Dataset', end = '...')
-    data_dict = utils.load_train_data(data_path)
-    src_norm_with_unknown, tgt, mid_point, length = Make_batch(data_dict, opt).get_batch()
-    train_index, test_index = split_data(src_norm_with_unknown, tgt, mid_point, length)
-
-    mydata = MyDataSet(src_norm_with_unknown[train_index, :, :], tgt[train_index, :, :], mid_point, length)
-    print('Done!!', end = '...')
-    dataloader = Data.DataLoader(mydata, opt.batch_size, True)
-    grid_size_tensor = torch.Tensor([h_grid_size, w_grid_size])
-    model = Transformer(opt, grid_size_tensor)
-
-    for src_norm_with_unknown, tgt, mid_point, length in dataloader :
-        src_norm_with_unknown, tgt, mid_point, length = \
-            src_norm_with_unknown.float(), tgt.float(), mid_point.float(), length.float()
-        out = model(src_norm_with_unknown)
