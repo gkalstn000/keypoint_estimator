@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import torch.utils.data as Data
 
-from data.ochfashion_dataset import MyDataSet
+from data.tmp_dataset import MyDataSet
 
 class Bidirectional_LSTM(nn.Module):
     def __init__(self, opt):

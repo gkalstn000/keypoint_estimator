@@ -5,6 +5,8 @@ import argparse
 import os
 import pickle
 from util import util
+import data
+
 class BaseOptions(object):
 
     def __init__(self):
@@ -18,11 +20,12 @@ class BaseOptions(object):
         parser.add_argument('--model', type=str, default='kpestimator', help='which model to use')
         parser.add_argument('--phase', type=str, default='train', help='[train / test]')
         # input/output sizes
-        parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
+        parser.add_argument('--batch_size', type=int, default=2048, help='input batch size')
         parser.add_argument('--max_height', type=int, default=256, help='height of image')
         parser.add_argument('--max_width', type=int, default=176, help='width of image')
         # for setting inputs
-        parser.add_argument('--dataroot', type=str, default='./datasets')
+        parser.add_argument('--dataroot', type=str, default='./dataset')
+        parser.add_argument('--dataset_mode', type=str, default='ochfashion')
         parser.add_argument('--nThreads', default=0, type=int, help='# threads for loading data')
         parser.add_argument('--load_from_opt_file', action='store_true', help='load the options from checkpoints and use that as default')
         # for displays
@@ -34,10 +37,6 @@ class BaseOptions(object):
         # # Transformer params
         # parser.add_argument('--h_grid', type=int, default=100, help='number of height embedding')
         # parser.add_argument('--w_grid', type=int, default=100, help='number of height embedding')
-
-        # # data params
-        # parser.add_argument('--alpha', type=float, default=32, help='learning rate')
-        # parser.add_argument('--beta', type=float, default=20, help='learning rate')
 
         self.initialized = True
 
@@ -55,12 +54,12 @@ class BaseOptions(object):
         # model_name = opt.model
         # model_option_setter = models.get_option_setter(model_name)
         # parser = model_option_setter(parser, self.isTrain)
-        #
-        # # modify dataset-related parser options
-        # dataset_mode = opt.dataset_mode
-        # dataset_option_setter = data.get_option_setter(dataset_mode)
-        # parser = dataset_option_setter(parser, self.isTrain)
-        # opt, unknown = parser.parse_known_args()
+
+        # modify dataset-related parser options
+        dataset_mode = opt.dataset_mode
+        dataset_option_setter = data.get_option_setter(dataset_mode)
+        parser = dataset_option_setter(parser, self.isTrain)
+        opt, unknown = parser.parse_known_args()
 
         # if there is opt_file, load it.
         # The previous default options will be overwritten
@@ -137,7 +136,7 @@ class BaseOptions(object):
 
         assert len(opt.gpu_ids) == 0 or opt.batch_size % len(opt.gpu_ids) == 0, \
             "Batch size %d is wrong. It must be a multiple of # GPUs %d." \
-            % (opt.batchSize, len(opt.gpu_ids))
+            % (opt.batch_size, len(opt.gpu_ids))
 
         self.opt = opt
         return self.opt

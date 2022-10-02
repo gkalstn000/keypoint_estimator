@@ -7,7 +7,7 @@ import torch.utils.data as Data
 
 import util.io
 from util import util
-from data.ochfashion_dataset import MyDataSet, Make_batch
+from data.tmp_dataset import MyDataSet, Make_batch
 from tools.eval_tools import Evaler
 from options.transformer_options import Transformer as transformer_option
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     h_grid_size = 2 / opt.h_grid # (1 - (-1)) / opt.h_grid
     w_grid_size = 2 / opt.w_grid # (1 - (-1)) / opt.w_grid
 
-    data_path = 'dataset/test_annotation.csv'
+    data_path = 'dataset/ochfashion/test_annotation.csv'
     print('Make Batch Dataset', end = '...')
     test_df = utils.load_train_data(data_path)
     src, tgt_with_occlusion, mid_point, length = Make_batch(test_df, opt).get_batch()

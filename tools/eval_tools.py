@@ -139,7 +139,7 @@ class Evaler :
 
         return torch.where(up_scale > max_point, unknown, up_scale)
 
-from data.ochfashion_dataset import MyDataSet
+from data.tmp_dataset import MyDataSet
 import torch.utils.data as Data
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from models.bidirectional_lstm_model import Bidirectional_LSTM
