@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
     dataloader = data.create_dataloader(opt)
 
+    # cuda는 model안에서 바꿔주는걸로
     for i, data_i in enumerate(dataloader):
         print(data_i)
 
