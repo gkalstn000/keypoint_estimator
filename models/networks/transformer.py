@@ -5,21 +5,32 @@ import torch.nn as nn
 
 
 class Embedding(nn.Module):
-    def __init__(self, h_grid, w_grid, embedding_dim):
+    def __init__(self, h_grid, w_grid, embedding_dim, keypoint_size):
         super(Embedding, self).__init__()
+        self.h_grid = h_grid
+        self.w_grid = w_grid
+        self.embedding_dim = embedding_dim
+        self.keypoint_size = keypoint_size
+
         input_size = embedding_dim * 2 +1
         self.max_len = 18
-
-        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim)
-        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim)
+        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim) # grid embedding + unknown_token
+        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim) # grid embedding + unknown_token
         self.pos_embed = nn.Embedding(self.max_len, input_size)  # 18 position embedding
 
         self.norm = nn.LayerNorm(input_size)
         self.pos = torch.arange(self.max_len)
 
-    def forward(self, x, grid_size_tensor):
+    def forward(self, x):
         # key point embedding
-        unknown_index = (x > 1)[:, :, 0]
+        unknown_index = x.isnan().any(-1)
+
+
+
+
+
+
+
         grid_embedding_index = torch.div(x + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
         h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
         w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
@@ -113,7 +124,7 @@ from tools.train_tools import Trainer
 import sys
 if __name__ == '__main__':
     h_grid, w_grid, embedding_dim = 100, 100, 7
-    embedding = Embedding(h_grid, w_grid, embedding_dim)
+    embedding = Embedding(h_grid, w_grid, embedding_dim, (256, 176))
     opt = TrainOptions().parse()
     # print options to help debugging
     print(' '.join(sys.argv))
@@ -124,4 +135,4 @@ if __name__ == '__main__':
     for i, data_i in enumerate(dataloader):
         print(data_i)
         src_keypoint = data_i['source_keypoint']
-        embedding(data_i)
+        embedding(src_keypoint)
