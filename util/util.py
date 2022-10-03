@@ -1,6 +1,7 @@
 import json
-import torch
 import os
+import importlib
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import key_point_name as kpn
@@ -20,7 +21,19 @@ def load_df(path) :
     return pd.read_csv(path, sep=':')
 
 
+def find_class_in_module(target_cls_name, module):
+    target_cls_name = target_cls_name.replace('_', '').lower()
+    clslib = importlib.import_module(module)
+    cls = None
+    for name, clsobj in clslib.__dict__.items():
+        if name.lower() == target_cls_name:
+            cls = clsobj
 
+    if cls is None:
+        print("In %s, there should be a class whose name matches %s in lowercase without underscore(_)" % (module, target_cls_name))
+        exit(0)
+
+    return cls
 
 
 

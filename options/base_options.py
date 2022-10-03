@@ -30,6 +30,9 @@ class BaseOptions(object):
         parser.add_argument('--load_from_opt_file', action='store_true', help='load the options from checkpoints and use that as default')
         # for displays
         parser.add_argument('--display_winsize', type=int, default=400, help='display window size')
+        # for model
+        parser.add_argument('--init_type', type=str, default='xavier', help='network initialization [normal|xavier|kaiming|orthogonal]')
+        parser.add_argument('--init_variance', type=float, default=0.02, help='variance of the initialization distribution')
 
 
 

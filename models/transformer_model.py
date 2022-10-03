@@ -1,4 +1,4 @@
-from .networks.transformer_network import *
+from .networks.transformer import *
 
 def fc_layer(size_in, size_out, keep_prob=0.9):
     linear = nn.Linear(size_in, size_out)

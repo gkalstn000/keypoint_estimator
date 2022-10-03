@@ -3,6 +3,34 @@ import torch
 import numpy as np
 import torch.nn as nn
 
+
+class Embedding(nn.Module):
+    def __init__(self, h_grid, w_grid, embedding_dim):
+        super(Embedding, self).__init__()
+        input_size = embedding_dim * 2 +1
+        self.max_len = 18
+
+        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim)
+        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim)
+        self.pos_embed = nn.Embedding(self.max_len, input_size)  # 18 position embedding
+
+        self.norm = nn.LayerNorm(input_size)
+        self.pos = torch.arange(self.max_len)
+
+    def forward(self, x, grid_size_tensor):
+        # key point embedding
+        unknown_index = (x > 1)[:, :, 0]
+        grid_embedding_index = torch.div(x + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
+        h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
+        w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
+        point_embedding = torch.cat([h_embedding, w_embedding, unknown_index.unsqueeze(2)], dim = 2)
+        # pos embedding
+
+        pos = self.pos.unsqueeze(0).repeat(x.size(0), 1)  # [seq_len] -> [batch_size, seq_len]
+        pos_embedding = self.pos_embed(pos.to(x.device.type))
+        embedding = point_embedding + pos_embedding
+        return self.norm(embedding)
+
 def gelu(x):
     """ Implementation of the gelu activation function. For information: OpenAI GPT's gelu is slightly different (and gives slightly different results): 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3)))) Also see https://arxiv.org/abs/1606.08415 """
     return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
@@ -59,32 +87,6 @@ class PoswiseFeedForwardNet(nn.Module):
         # (batch_size, seq_len, d_model) -> (batch_size, seq_len, d_ff) -> (batch_size, seq_len, d_model)
         return self.fc2(gelu(self.fc1(x)))
 
-class Embedding(nn.Module):
-    def __init__(self, h_grid, w_grid, embedding_dim):
-        super(Embedding, self).__init__()
-        input_size = embedding_dim * 2 +1
-        self.max_len = 18
-
-        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim)
-        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim)
-        self.pos_embed = nn.Embedding(self.max_len, input_size)  # 18 position embedding
-
-        self.norm = nn.LayerNorm(input_size)
-        self.pos = torch.arange(self.max_len)
-
-    def forward(self, x, grid_size_tensor):
-        # key point embedding
-        unknown_index = (x > 1)[:, :, 0]
-        grid_embedding_index = torch.div(x + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
-        h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
-        w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
-        point_embedding = torch.cat([h_embedding, w_embedding, unknown_index.unsqueeze(2)], dim = 2)
-        # pos embedding
-
-        pos = self.pos.unsqueeze(0).repeat(x.size(0), 1)  # [seq_len] -> [batch_size, seq_len]
-        pos_embedding = self.pos_embed(pos.to(x.device.type))
-        embedding = point_embedding + pos_embedding
-        return self.norm(embedding)
 
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, d_k, d_v, n_heads, d_ff):
@@ -96,3 +98,30 @@ class EncoderLayer(nn.Module):
         enc_outputs = self.enc_self_attn(enc_inputs, enc_inputs, enc_inputs) # enc_inputs to same Q,K,V
         enc_outputs = self.pos_ffn(enc_outputs) # enc_outputs: [batch_size, seq_len, d_model]
         return enc_outputs
+
+
+
+from options.train_options import TrainOptions
+# =========== Import Dataset modules ===========
+import data
+# =========== Import Models ===========
+from models import create_model
+# =========== Import util modules ===========
+from util import util
+from tools.train_tools import Trainer
+# =========== Import etc... ===========
+import sys
+if __name__ == '__main__':
+    h_grid, w_grid, embedding_dim = 100, 100, 7
+    embedding = Embedding(h_grid, w_grid, embedding_dim)
+    opt = TrainOptions().parse()
+    # print options to help debugging
+    print(' '.join(sys.argv))
+
+    dataloader = data.create_dataloader(opt)
+
+    # cuda는 model안에서 바꿔주는걸로
+    for i, data_i in enumerate(dataloader):
+        print(data_i)
+        src_keypoint = data_i['source_keypoint']
+        embedding(data_i)
