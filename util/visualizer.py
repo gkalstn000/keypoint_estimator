@@ -125,15 +125,15 @@ class Visualizer():
         with open(self.log_id, "a") as log_file:
             log_file.write('%s\n' % message)
 
-    def convert_visuals_to_numpy(self, visuals):
-        for key, t in visuals.items():
-            tile = self.opt.batchSize > 8
-            if 'input_label' == key:
-                t = util.tensor2label(t, self.opt.label_nc + 2, tile=tile)
-            else:
-                t = util.tensor2im(t, tile=tile)
-            visuals[key] = t
-        return visuals
+    # def convert_visuals_to_numpy(self, visuals):
+    #     for key, t in visuals.items():
+    #         tile = self.opt.batchSize > 8
+    #         if 'input_label' == key:
+    #             t = util.tensor2label(t, self.opt.label_nc + 2, tile=tile)
+    #         else:
+    #             t = util.tensor2im(t, tile=tile)
+    #         visuals[key] = t
+    #     return visuals
 
     # save image to the disk
     def save_images(self, webpage, visuals, image_path):        

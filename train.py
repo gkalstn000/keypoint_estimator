@@ -45,7 +45,7 @@ if __name__ == "__main__":
                 losses = trainer.get_latest_losses()
                 visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
                                                 losses, iter_counter.time_per_iter)
-                # visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
+                visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
             # if iter_counter.needs_displaying():
                 # visuals = OrderedDict([('input_label', data_i['label']),
@@ -58,7 +58,6 @@ if __name__ == "__main__":
                       (epoch, iter_counter.total_steps_so_far))
                 trainer.save('latest')
                 iter_counter.record_current_iter()
-
         trainer.update_learning_rate(epoch)
         iter_counter.record_epoch_end()
 

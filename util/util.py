@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import key_point_name as kpn
 import pandas as pd
+from PIL import Image
 
 def mkdirs(paths):
     if isinstance(paths, list) and not isinstance(paths, str):
@@ -43,8 +44,20 @@ def save_network(net, label, epoch, opt):
         net.cuda()
 
 
+def save_image(image_numpy, image_path, create_dir=False):
+    if create_dir:
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    if len(image_numpy.shape) == 2:
+        image_numpy = np.expand_dims(image_numpy, axis=2)
+    if image_numpy.shape[2] == 1:
+        image_numpy = np.repeat(image_numpy, 3, 2)
+    image_pil = Image.fromarray(image_numpy)
 
+    # save to png
+    image_pil.save(image_path.replace('.jpg', '.png'))
 
+def make_keypoint_image(keypoint, size) :
+    pass
 
 
 

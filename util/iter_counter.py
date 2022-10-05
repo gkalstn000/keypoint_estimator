@@ -27,7 +27,7 @@ class IterationCounter():
                 print('Could not load iteration record at %s. Starting from beginning.' %
                       self.iter_record_path)
 
-        self.total_steps_so_far = (self.first_epoch - 1) * dataset_size + self.epoch_iter
+        self.total_steps_so_far = (self.first_epoch - 1) * dataset_size + self.epoch_iter # 남은 steps
 
     # return the iterator of epochs for the training
     def training_epochs(self):
