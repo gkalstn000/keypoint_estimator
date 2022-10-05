@@ -44,7 +44,7 @@ class TransformerGenerator(BaseNetwork):
         # keypoint
         self.Keypoint_Regressor = nn.ModuleList()
         input_ = d_model
-        for output in [self.d_ff, 32]:
+        for output in [opt.d_ff, 32]:
             self.Keypoint_Regressor.append(fc_layer(input_, output))
             input_ = output
         layer = nn.Sequential(
@@ -54,7 +54,7 @@ class TransformerGenerator(BaseNetwork):
         # occlusion
         self.Occlusion_Classifier = nn.ModuleList()
         input_ = d_model # embedding*2+1
-        for output in [self.d_ff, 32]:
+        for output in [opt.d_ff, 32]:
             self.Occlusion_Classifier.append(fc_layer(input_, output))
             input_ = output
         layer = nn.Sequential(
@@ -72,11 +72,11 @@ class TransformerGenerator(BaseNetwork):
         output = self.gelu(self.final_linear(output)) # [batch_size, max_pred, d_model]
         # keypoint
         keypoint_logits = output
-        for linear in self.MLM_Regressor :
+        for linear in self.Keypoint_Regressor :
             keypoint_logits = linear(keypoint_logits)
         # occlusion
         occlusion_logits = output
-        for linear in self.Classifier :
+        for linear in self.Occlusion_Classifier :
             occlusion_logits = linear(occlusion_logits)
 
         return keypoint_logits, occlusion_logits

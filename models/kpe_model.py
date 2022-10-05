@@ -18,12 +18,20 @@ class KPEModel(torch.nn.Module):
 
         self.netG = self.initialize_networks(opt)
 
+        # set loss functions
+        if opt.isTrain:
+            self.criterionMSE = torch.nn.MSELoss() # for keypoint loss
+            self.criterionBCE = torch.nn.BCELoss() # for occlusion loss
+
     def forward(self, data, mode):
-        # Entry point for all calls involving forward pass
-        # of deep networks. We used this approach since DataParallel module
-        # can't parallelize custom functions, we branch to different
-        # routines based on |mode|.
-        pass
+        source, target, occlusion_label = self.preprocess_input(data)
+
+        if mode == 'generator' :
+            g_losses, fake_keypoint = self.compute_generator_loss(source, target, occlusion_label)
+            return g_losses, fake_keypoint
+        elif mode == 'inference' :
+            with torch.no_grad() :
+                fake_keypoint, occlusion_pred = self.generate_fake(source)
 
     def create_optimizers(self, opt):
         G_params = list(self.netG.parameters())
@@ -47,19 +55,31 @@ class KPEModel(torch.nn.Module):
 
     def preprocess_input(self, data):
         # preprocess the input, such as moving the tensors to GPUs and
-        # transforming the label map to one-hot encoding
         # |data|: dictionary of the input data
-        pass
+        if self.use_gpu() :
+            data['source_keypoint'] = data['source_keypoint'].float().cuda()
+            data['target_keypoint'] = data['target_keypoint'].float().cuda()
+            data['occlusion_label'] = data['occlusion_label'].float().cuda()
 
-    def compute_generator_loss(self, input_semantics, real_image):
-        pass
+        return data['source_keypoint'], data['target_keypoint'], data['occlusion_label']
+
+    def compute_generator_loss(self, source, target, occlusion_label):
+        G_losses = {}
+        fake_keypoint, occlusion_pred = self.generate_fake(source)
+        G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
+        G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
+
+        return G_losses, fake_keypoint
+
+
+
 
     def compute_discriminator_loss(self, input_semantics, real_image):
         pass
 
-    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
-        pass
-
+    def generate_fake(self, source):
+        fake_keypoint, occlusion_pred = self.netG(source)
+        return fake_keypoint, occlusion_pred
     def discriminate(self, input_semantics, fake_image, real_image):
         pass
     # Take the prediction of fake and real images from the combined batch

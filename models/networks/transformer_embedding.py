@@ -14,7 +14,7 @@ class Embedding(nn.Module):
         self.pos_embed = nn.Embedding(self.max_len, input_size)  # 18 position embedding
 
         self.norm = nn.LayerNorm(input_size)
-        self.pos = torch.arange(self.max_len)
+        self.pos = torch.arange(self.max_len).cuda()
 
     def forward(self, x):
         # key point embedding
