@@ -56,16 +56,70 @@ def save_image(image_numpy, image_path, create_dir=False):
     # save to png
     image_pil.save(image_path.replace('.jpg', '.png'))
 
-def make_keypoint_image(keypoint, size) :
-    pass
+# ========== GFLA code ============
+
+MISSING_VALUE = -1
+
+def cords_to_map(cords, img_size, sigma=6):
+    '''
+    cords device -> cpu -> heatmap
+    :param cords: [B, 18, 2] size torch tensor keypoint coordinates
+    :param img_size: [h, w] list type image size
+    :param sigma: size of heatmap
+    :return: cpu device torch tensor heatmap of keypoint
+    '''
+    cords = cords.cpu().numpy()
+    cords_maximum = np.nanmax(cords, axis=1, keepdims = True)
+    cords_minimum = np.nanmin(cords, axis=1, keepdims = True)
+    cords = (cords - (cords_minimum - 15)) / ((cords_maximum + 15) - (cords_minimum - 15)) * np.array(img_size)
+    cords = cords.astype(float)
+    result = np.zeros(img_size + cords.shape[0:1], dtype='float32')
+    for i, point in enumerate(cords):
+        if point[0] == MISSING_VALUE or point[1] == MISSING_VALUE:
+            continue
+        point[0] = point[0]/img_size[0] * img_size[0]
+        point[1] = point[1]/img_size[1] * img_size[1]
+        point_0 = int(point[0])
+        point_1 = int(point[1])
+        xx, yy = np.meshgrid(np.arange(img_size[1]), np.arange(img_size[0]))
+        result[..., i] = np.exp(-((yy - point_0) ** 2 + (xx - point_1) ** 2) / (2 * sigma ** 2))
+    return result
+
+def map_to_cord(pose_map, threshold=0.1):
+    all_peaks = [[] for i in range(18)]
+    pose_map = pose_map[..., :18]
+
+    y, x, z = np.where(np.logical_and(pose_map == pose_map.max(axis = (0, 1)),
+                                     pose_map > threshold))
+    for x_i, y_i, z_i in zip(x, y, z):
+        all_peaks[z_i].append([x_i, y_i])
+
+    x_values = []
+    y_values = []
+
+    for i in range(18):
+        if len(all_peaks[i]) != 0:
+            x_values.append(all_peaks[i][0][0])
+            y_values.append(all_peaks[i][0][1])
+        else:
+            x_values.append(MISSING_VALUE)
+            y_values.append(MISSING_VALUE)
+
+    return np.concatenate([np.expand_dims(y_values, -1), np.expand_dims(x_values, -1)], axis=1)
+
+
+# ========== GFLA code ============
 
 
 
 
 
 
-
-
+# ======================== Trash ========================
+# ======================== Trash ========================
+# ======================== Trash ========================
+# ======================== Trash ========================
+# ======================== Trash ========================
 
 def load_train_data(data_path) :
     '''

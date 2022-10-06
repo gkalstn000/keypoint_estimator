@@ -44,8 +44,8 @@ class KPETrainer():
     def get_latest_generated(self):
         return self.generated
 
-    def update_learning_rate(self, epoch):
-        self.update_learning_rate(epoch)
+    # def update_learning_rate(self, epoch):
+    #     self.update_learning_rate(epoch)
 
     def save(self, epoch):
         self.kpe_model_on_one_gpu.save(epoch)
@@ -62,10 +62,7 @@ class KPETrainer():
             new_lr = self.old_lr
 
         if new_lr != self.old_lr:
-            if self.opt.no_TTUR:
-                new_lr_G = new_lr
-            else:
-                new_lr_G = new_lr / 2
+            new_lr_G = new_lr
 
             for param_group in self.optimizer_G.param_groups:
                 param_group['lr'] = new_lr_G
