@@ -93,7 +93,6 @@ def cords_to_map(cords, img_size, sigma=6):
             xx, yy = np.meshgrid(np.arange(img_size[1]), np.arange(img_size[0]))
             result[i][..., j] = np.exp(-((yy - point_0) ** 2 + (xx - point_1) ** 2) / (2 * sigma ** 2))
 
-    colors, mask = draw_pose_from_cords(cords_norm[0].astype(np.uint8), img_size)
 
     for i in range(result.shape[0]) :
         array = (result[i].max(-1) * 255).astype(np.uint8)

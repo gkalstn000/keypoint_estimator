@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="ailab@166.104.232.127:7001 password" confirmBeforeUploading="false" confirmBeforeDeletion="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="ubuntu@211.253.164.238:16022 password (1)" confirmBeforeUploading="false" confirmBeforeDeletion="false">
     <option name="confirmBeforeDeletion" value="false" />
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
@@ -8,6 +8,13 @@
         <serverdata>
           <mappings>
             <mapping deploy="/Desktop/msha/kpe" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ubuntu@211.253.164.238:16022 password (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/kpe" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
