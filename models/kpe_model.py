@@ -66,9 +66,13 @@ class KPEModel(torch.nn.Module):
     def compute_generator_loss(self, source, target, occlusion_label):
         G_losses = {}
         fake_keypoint, occlusion_pred = self.generate_fake(source)
-        util.draw_pose_from_cords(target, (self.opt.max_height, self.opt.max_width))
+        real_color_map, real_gray_map = util.draw_pose_from_cords(target, (self.opt.max_height, self.opt.max_width))
+        fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint, (self.opt.max_height, self.opt.max_width))
+        # Calculate losses
         G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
         G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
+
+        pred_fake, pred_real = self.discriminate(fake_gray_map, real_gray_map)
 
         return G_losses, fake_keypoint
 
@@ -81,7 +85,7 @@ class KPEModel(torch.nn.Module):
     def generate_fake(self, source):
         fake_keypoint, occlusion_pred = self.netG(source)
         return fake_keypoint, occlusion_pred
-    def discriminate(self, input_semantics, fake_image, real_image):
+    def discriminate(self, fake_image, real_image):
         pass
     # Take the prediction of fake and real images from the combined batch
     def divide_pred(self, pred):
