@@ -66,7 +66,7 @@ class KPEModel(torch.nn.Module):
     def compute_generator_loss(self, source, target, occlusion_label):
         G_losses = {}
         fake_keypoint, occlusion_pred = self.generate_fake(source)
-        util.cords_to_map(target, (self.opt.max_height, self.opt.max_width))
+        util.draw_pose_from_cords(target, (self.opt.max_height, self.opt.max_width))
         G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
         G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
 

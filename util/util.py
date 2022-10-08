@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import key_point_name as kpn
 import pandas as pd
-from tqdm import trange
+from tqdm import trange, tqdm
 from PIL import Image
 from skimage.draw import disk, line_aa, polygon
 
@@ -61,13 +61,13 @@ def save_image(image_numpy, image_path, create_dir=False):
 # ========== GFLA code ============
 LIMB_SEQ = [[1,2], [1,5], [2,3], [3,4], [5,6], [6,7], [1,8], [8,9],
            [9,10], [1,11], [11,12], [12,13], [1,0], [0,14], [14,16],
-           [0,15], [15,17], [2,16], [5,17]]
+           [0,15], [15,17]]
 COLORS = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
           [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
           [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
 MISSING_VALUE = -1
 
-def cords_to_map(cords, img_size, sigma=6):
+def draw_pose_from_cords(cords, img_size) :
     '''
     cords device -> cpu -> heatmap
     :param cords: [B, 18, 2] size torch tensor keypoint coordinates
@@ -81,9 +81,56 @@ def cords_to_map(cords, img_size, sigma=6):
     cords_norm = (cords - (cords_minimum - 15)) / ((cords_maximum + 15) - (cords_minimum - 15)) * np.array(img_size)
     cords_norm = cords_norm.astype(float)
     cords_norm[np.isnan(cords_norm)] = MISSING_VALUE
-    result = np.zeros(img_size + cords_norm.shape[0:2], dtype='float32').transpose((2, 0, 1, 3))
+    cords_norm = cords_norm.astype(int)
+    color_map, gray_map = [], []
+    for cord in tqdm(cords_norm) :
+        color, gray = __draw_pose_from_cords(cord, img_size)
+        color_map.append(color)
+        gray_map.append(gray)
 
-    for i in trange(result.shape[0], desc = 'coords to map') :
+    color_map = np.stack(color_map, axis = 0)
+    gray_map = np.stack(gray_map, axis = 0)
+    return color_map, gray_map
+
+def __draw_pose_from_cords(pose_joints, img_size, radius=4):
+    colors = np.zeros(shape=img_size + (3, ), dtype=np.uint8)
+    mask = np.zeros(shape=img_size, dtype=bool)
+
+    for f, t in LIMB_SEQ:
+        from_missing = pose_joints[f][0] == MISSING_VALUE or pose_joints[f][1] == MISSING_VALUE
+        to_missing = pose_joints[t][0] == MISSING_VALUE or pose_joints[t][1] == MISSING_VALUE
+        if from_missing or to_missing:
+            continue
+        yy, xx, val = line_aa(pose_joints[f][0], pose_joints[f][1], pose_joints[t][0], pose_joints[t][1])
+        colors[yy, xx] = np.expand_dims(val, 1) * 255
+        mask[yy, xx] = True
+
+    for i, joint in enumerate(pose_joints):
+        if pose_joints[i][0] == MISSING_VALUE or pose_joints[i][1] == MISSING_VALUE:
+            continue
+        yy, xx = disk((joint[0], joint[1]), radius=radius, shape=img_size)
+        colors[yy, xx] = COLORS[i]
+        mask[yy, xx] = True
+    return colors, mask
+
+def cords_to_map(cords, img_size, sigma=6):
+    colors = np.zeros(shape=img_size + (3,), dtype=np.uint8)
+    '''
+    cords device -> cpu -> heatmap
+    :param cords: [B, 18, 2] size torch tensor keypoint coordinates
+    :param img_size: [h, w] list type image size
+    :param sigma: size of heatmap
+    :return: cpu device torch tensor heatmap of keypoint
+    '''
+    cords = cords.cpu().numpy()
+    cords_maximum = np.nanmax(cords, axis=1, keepdims = True)
+    cords_minimum = np.nanmin(cords, axis=1, keepdims = True)
+    cords_norm = (cords - (cords_minimum - 15)) / ((cords_maximum + 15) - (cords_minimum - 15)) * np.array(img_size)
+    cords_norm = cords_norm.astype(float)
+    cords_norm[np.isnan(cords_norm)] = MISSING_VALUE
+
+    point_map = np.zeros(img_size + cords_norm.shape[0:2], dtype='float32').transpose((2, 0, 1, 3))
+    for i in trange(point_map.shape[0], desc = 'coords to map') :
         cord = cords_norm[i]
         for j, point in enumerate(cord) :
             if point[0] == MISSING_VALUE or point[1] == MISSING_VALUE:
@@ -91,14 +138,16 @@ def cords_to_map(cords, img_size, sigma=6):
             point_0 = int(point[0])
             point_1 = int(point[1])
             xx, yy = np.meshgrid(np.arange(img_size[1]), np.arange(img_size[0]))
-            result[i][..., j] = np.exp(-((yy - point_0) ** 2 + (xx - point_1) ** 2) / (2 * sigma ** 2))
+            point_map[i][..., j] = np.exp(-((yy - point_0) ** 2 + (xx - point_1) ** 2) / (2 * sigma ** 2))
 
 
-    for i in range(result.shape[0]) :
-        array = (result[i].max(-1) * 255).astype(np.uint8)
+
+
+    for i in range(point_map.shape[0]) :
+        array = (point_map[i].max(-1) * 255).astype(np.uint8)
         save_array_to_image(array, f'tmp/test_heatmap{i}.png')
 
-    return result
+    return point_map
 
 def map_to_cord(pose_map, threshold=0.1):
     all_peaks = [[] for i in range(18)]
@@ -121,28 +170,7 @@ def map_to_cord(pose_map, threshold=0.1):
             y_values.append(MISSING_VALUE)
 
     return np.concatenate([np.expand_dims(y_values, -1), np.expand_dims(x_values, -1)], axis=1)
-def draw_pose_from_cords(pose_joints, img_size, radius=2, draw_joints=True):
-    colors = np.zeros(shape=img_size + (3, ), dtype=np.uint8)
-    mask = np.zeros(shape=img_size, dtype=bool)
 
-    if draw_joints:
-        for f, t in LIMB_SEQ:
-            from_missing = pose_joints[f][0] == MISSING_VALUE or pose_joints[f][1] == MISSING_VALUE
-            to_missing = pose_joints[t][0] == MISSING_VALUE or pose_joints[t][1] == MISSING_VALUE
-            if from_missing or to_missing:
-                continue
-            yy, xx, val = line_aa(pose_joints[f][0], pose_joints[f][1], pose_joints[t][0], pose_joints[t][1])
-            colors[yy, xx] = np.expand_dims(val, 1) * 255
-            mask[yy, xx] = True
-
-    for i, joint in enumerate(pose_joints):
-        if pose_joints[i][0] == MISSING_VALUE or pose_joints[i][1] == MISSING_VALUE:
-            continue
-        yy, xx = disk(joint[0], joint[1], radius=radius, shape=img_size)
-        colors[yy, xx] = COLORS[i]
-        mask[yy, xx] = True
-
-    return colors, mask
 
 # ========== GFLA code ============
 def save_array_to_image(array, path) :
