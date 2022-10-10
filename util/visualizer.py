@@ -78,9 +78,9 @@ class Visualizer():
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment id = %s' % self.id, refresh=5)
             for n in range(epoch, 0, -1):
-                if n != epoch :
+                if n < epoch :
                     max_step_per_epoch = datalen // opt.batch_size * opt.batch_size
-                    step = step - ((epoch-n-1) * max_step_per_epoch + epoch_iter)
+                    step = max_step_per_epoch * n
                 webpage.add_header('epoch [%d]' % n)
                 ims = []
                 txts = []

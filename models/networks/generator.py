@@ -24,11 +24,11 @@ class TransformerGenerator(BaseNetwork):
         # encoder options
         parser.add_argument('--output_dim', type=int, default=2, help='output dimension')
         parser.add_argument('--n_layers', type=int, default=3, help='number of bidirectional lstm layers')
-        parser.add_argument('--d_k', type=int, default=2, help='number of bidirectional lstm layers')
-        parser.add_argument('--d_v', type=int, default=2, help='number of bidirectional lstm layers')
-        parser.add_argument('--n_heads', type=int, default=3, help='number of bidirectional lstm layers')
+        parser.add_argument('--d_k', type=int, default=2, help='self-attention key dimension')
+        parser.add_argument('--d_v', type=int, default=2, help='self-attention val dimension')
+        parser.add_argument('--n_heads', type=int, default=3, help='self-attention numberof multi heads')
         # transformer options
-        parser.add_argument('--d_ff', type=int, default=128, help='number of bidirectional lstm layers')
+        parser.add_argument('--d_ff', type=int, default=256, help='transformer number of feed forward layer dimension')
 
         return parser
     def __init__(self, opt):
