@@ -31,16 +31,18 @@ class KPETrainer():
 
     def run_generator_one_step(self, data):
         self.optimizer_G.zero_grad()
-        g_losses, generated = self.kpe_model(data, mode='generator')
+        g_losses, g_map, generated = self.kpe_model(data, mode='generator')
         g_loss = sum(g_losses.values()).mean()
         g_loss.backward()
         self.optimizer_G.step()
         self.g_losses = g_losses
+        self.g_map = g_map
         self.generated = generated
 
     def get_latest_losses(self):
         return {**self.g_losses}
-
+    def get_latest_maps(self):
+        return {**self.g_map}
     def get_latest_generated(self):
         return self.generated
 

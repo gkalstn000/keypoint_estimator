@@ -75,7 +75,7 @@ def draw_pose_from_cords(cords, img_size) :
     :param sigma: size of heatmap
     :return: cpu device torch tensor heatmap of keypoint
     '''
-    cords = cords.cpu().numpy()
+    cords = cords.detach().cpu().numpy()
     cords_maximum = np.nanmax(cords, axis=1, keepdims = True)
     cords_minimum = np.nanmin(cords, axis=1, keepdims = True)
     cords_norm = (cords - (cords_minimum - 15)) / ((cords_maximum + 15) - (cords_minimum - 15)) * np.array(img_size)
@@ -83,7 +83,7 @@ def draw_pose_from_cords(cords, img_size) :
     cords_norm[np.isnan(cords_norm)] = MISSING_VALUE
     cords_norm = cords_norm.astype(int)
     color_map, gray_map = [], []
-    for cord in tqdm(cords_norm) :
+    for cord in tqdm(cords_norm, 'Transform keypoint to map') :
         color, gray = __draw_pose_from_cords(cord, img_size)
         color_map.append(color)
         gray_map.append(gray)
@@ -92,7 +92,7 @@ def draw_pose_from_cords(cords, img_size) :
     gray_map = np.stack(gray_map, axis = 0)
     return color_map, gray_map
 
-def __draw_pose_from_cords(pose_joints, img_size, radius=4):
+def __draw_pose_from_cords(pose_joints, img_size, radius=8):
     colors = np.zeros(shape=img_size + (3, ), dtype=np.uint8)
     mask = np.zeros(shape=img_size, dtype=bool)
 

@@ -39,11 +39,8 @@ class Visualizer():
                 log_file.write('================ Training Loss (%s) ================\n' % now)
 
     # |visuals|: dictionary of images to display or save
-    def display_current_results(self, visuals, epoch, step):
+    def display_current_results(self, visuals, epoch, step, epoch_iter, datalen, opt):
 
-        ## convert tensors to numpy arrays
-        visuals = self.convert_visuals_to_numpy(visuals)
-                
         if self.tf_log: # show images in tensorboard output
             img_summaries = []
             for label, image_numpy in visuals.items():
@@ -65,6 +62,8 @@ class Visualizer():
             self.writer.add_summary(summary, step)
 
         if self.use_html: # save images to a html file
+
+
             for label, image_numpy in visuals.items():
                 if isinstance(image_numpy, list):
                     for i in range(len(image_numpy)):
@@ -79,6 +78,9 @@ class Visualizer():
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment id = %s' % self.id, refresh=5)
             for n in range(epoch, 0, -1):
+                if n != epoch :
+                    max_step_per_epoch = datalen // opt.batch_size * opt.batch_size
+                    step = step - ((epoch-n-1) * max_step_per_epoch + epoch_iter)
                 webpage.add_header('epoch [%d]' % n)
                 ims = []
                 txts = []
@@ -124,16 +126,6 @@ class Visualizer():
         print(message)
         with open(self.log_id, "a") as log_file:
             log_file.write('%s\n' % message)
-
-    # def convert_visuals_to_numpy(self, visuals):
-    #     for key, t in visuals.items():
-    #         tile = self.opt.batchSize > 8
-    #         if 'input_label' == key:
-    #             t = util.tensor2label(t, self.opt.label_nc + 2, tile=tile)
-    #         else:
-    #             t = util.tensor2im(t, tile=tile)
-    #         visuals[key] = t
-    #     return visuals
 
     # save image to the disk
     def save_images(self, webpage, visuals, image_path):        

@@ -27,8 +27,8 @@ class KPEModel(torch.nn.Module):
         source, target, occlusion_label = self.preprocess_input(data)
 
         if mode == 'generator' :
-            g_losses, fake_keypoint = self.compute_generator_loss(source, target, occlusion_label)
-            return g_losses, fake_keypoint
+            g_losses, g_map, fake_keypoint = self.compute_generator_loss(source, target, occlusion_label)
+            return g_losses, g_map, fake_keypoint
         elif mode == 'inference' :
             with torch.no_grad() :
                 fake_keypoint, occlusion_pred = self.generate_fake(source)
@@ -65,16 +65,22 @@ class KPEModel(torch.nn.Module):
 
     def compute_generator_loss(self, source, target, occlusion_label):
         G_losses = {}
+        G_map = {}
         fake_keypoint, occlusion_pred = self.generate_fake(source)
+        # Keypoint to map
         real_color_map, real_gray_map = util.draw_pose_from_cords(target, (self.opt.max_height, self.opt.max_width))
         fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint, (self.opt.max_height, self.opt.max_width))
+        G_map['real_color_map'] = real_color_map
+        G_map['real_gray_map'] = real_gray_map
+        G_map['fake_color_map'] = fake_color_map
+        G_map['fake_gray_map'] = fake_gray_map
         # Calculate losses
         G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
         G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
 
-        pred_fake, pred_real = self.discriminate(fake_gray_map, real_gray_map)
+        # pred_fake, pred_real = self.discriminate(fake_gray_map, real_gray_map)
 
-        return G_losses, fake_keypoint
+        return G_losses, G_map, fake_keypoint
 
 
 

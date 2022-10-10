@@ -14,8 +14,11 @@ from trainers.kpe_trainer import KPETrainer
 # =========== Import util modules ===========
 from util.visualizer import Visualizer
 from util.iter_counter import IterationCounter
+from util.util import draw_pose_from_cords
 # =========== Import etc... ===========
 import sys
+from collections import OrderedDict
+
 
 if __name__ == "__main__":
     # parse options
@@ -47,11 +50,15 @@ if __name__ == "__main__":
                                                 losses, iter_counter.time_per_iter)
                 visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
-            # if iter_counter.needs_displaying():
-                # visuals = OrderedDict([('input_label', data_i['label']),
-                #                        ('synthesized_image', trainer.get_latest_generated()),
-                #                        ('real_image', data_i['image'])])
-                # visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
+            if iter_counter.needs_displaying():
+                visuals = dict()
+                source_color_map, _ = draw_pose_from_cords(data_i['source_keypoint'] * torch.Tensor([opt.max_height-1, opt.max_width-1]),
+                                                           (opt.max_height, opt.max_width))
+                latest_map = trainer.get_latest_maps()
+                visuals['source_color_map'] = source_color_map
+                visuals['fake_color_map'] = latest_map['fake_color_map']
+                visuals['real_color_map'] = latest_map['real_color_map']
+                visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far, iter_counter.epoch_iter, len(dataloader.dataset), opt)
 
             if iter_counter.needs_saving():
                 print('saving the latest model (epoch %d, total_steps %d)' %
