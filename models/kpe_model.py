@@ -32,6 +32,11 @@ class KPEModel(torch.nn.Module):
         elif mode == 'inference' :
             with torch.no_grad() :
                 fake_keypoint, occlusion_pred = self.generate_fake(source)
+                real_color_map, real_gray_map = util.draw_pose_from_cords(target,
+                                                                          (self.opt.max_height, self.opt.max_width))
+                fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint,
+                                                                          (self.opt.max_height, self.opt.max_width))
+                return fake_keypoint, occlusion_pred, real_gray_map, fake_gray_map
 
     def create_optimizers(self, opt):
         G_params = list(self.netG.parameters())

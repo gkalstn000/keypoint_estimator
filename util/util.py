@@ -44,7 +44,13 @@ def save_network(net, label, epoch, opt):
     torch.save(net.cpu().state_dict(), save_path)
     if len(opt.gpu_ids) and torch.cuda.is_available():
         net.cuda()
-
+def load_network(net, label, epoch, opt):
+    save_filename = '%s_net_%s.pth' % (epoch, label)
+    save_dir = os.path.join(opt.checkpoints_dir, opt.id)
+    save_path = os.path.join(save_dir, save_filename)
+    weights = torch.load(save_path)
+    net.load_state_dict(weights)
+    return net
 
 def save_image(image_numpy, image_path, create_dir=False):
     if create_dir:
@@ -53,7 +59,7 @@ def save_image(image_numpy, image_path, create_dir=False):
         image_numpy = np.expand_dims(image_numpy, axis=2)
     if image_numpy.shape[2] == 1:
         image_numpy = np.repeat(image_numpy, 3, 2)
-    image_pil = Image.fromarray(image_numpy)
+    image_pil = Image.fromarray(image_numpy.astype(np.uint8))
 
     # save to png
     image_pil.save(image_path.replace('.jpg', '.png'))
