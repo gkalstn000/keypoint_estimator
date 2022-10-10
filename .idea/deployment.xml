@@ -7,7 +7,7 @@
       <paths name="ailab@166.104.232.127:7001 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/Desktop/msha/KPE" local="$PROJECT_DIR$" />
+            <mapping deploy="/Desktop/msha/kpe" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

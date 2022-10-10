@@ -2,35 +2,6 @@ import math
 import torch
 import numpy as np
 import torch.nn as nn
-
-
-class Embedding(nn.Module):
-    def __init__(self, h_grid, w_grid, embedding_dim):
-        super(Embedding, self).__init__()
-        input_size = embedding_dim * 2 +1
-        self.max_len = 18
-
-        self.h_embedding = nn.Embedding(h_grid+1, embedding_dim)
-        self.w_embedding = nn.Embedding(w_grid+1, embedding_dim)
-        self.pos_embed = nn.Embedding(self.max_len, input_size)  # 18 position embedding
-
-        self.norm = nn.LayerNorm(input_size)
-        self.pos = torch.arange(self.max_len)
-
-    def forward(self, x, grid_size_tensor):
-        # key point embedding
-        unknown_index = (x > 1)[:, :, 0]
-        grid_embedding_index = torch.div(x + 1, grid_size_tensor[None, None, :], rounding_mode='trunc').int()
-        h_embedding = self.h_embedding(grid_embedding_index[:, :, 0])
-        w_embedding = self.w_embedding(grid_embedding_index[:, :, 1])
-        point_embedding = torch.cat([h_embedding, w_embedding, unknown_index.unsqueeze(2)], dim = 2)
-        # pos embedding
-
-        pos = self.pos.unsqueeze(0).repeat(x.size(0), 1)  # [seq_len] -> [batch_size, seq_len]
-        pos_embedding = self.pos_embed(pos.to(x.device.type))
-        embedding = point_embedding + pos_embedding
-        return self.norm(embedding)
-
 def gelu(x):
     """ Implementation of the gelu activation function. For information: OpenAI GPT's gelu is slightly different (and gives slightly different results): 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3)))) Also see https://arxiv.org/abs/1606.08415 """
     return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
@@ -58,6 +29,7 @@ class MultiHeadAttention(nn.Module):
         self.W_K = nn.Linear(d_model, d_k * n_heads)
         self.W_V = nn.Linear(d_model, d_v * n_heads)
 
+        self.ScaledDotProductAttention = ScaledDotProductAttention(d_k)
         self.fc = nn.Linear(self.n_heads * self.d_v, self.d_model)
         self.norm = nn.LayerNorm(self.d_model)
     def forward(self, Q, K, V):
@@ -69,7 +41,7 @@ class MultiHeadAttention(nn.Module):
         v_s = self.W_V(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1,2)  # v_s: [batch_size, n_heads, seq_len, d_v]
 
         # context: [batch_size, n_heads, seq_len, d_v], attn: [batch_size, n_heads, seq_len, seq_len]
-        context = ScaledDotProductAttention(self.d_k)(q_s, k_s, v_s)
+        context = self.ScaledDotProductAttention(q_s, k_s, v_s)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v) # context: [batch_size, seq_len, n_heads, d_v]
         output = self.fc(context)
         return self.norm(output + residual) # output: [batch_size, seq_len, d_model]
@@ -106,14 +78,15 @@ from options.train_options import TrainOptions
 import data
 # =========== Import Models ===========
 from models import create_model
+from models.networks.transformer_embedding import Embedding
 # =========== Import util modules ===========
 from util import util
 from tools.train_tools import Trainer
 # =========== Import etc... ===========
 import sys
 if __name__ == '__main__':
-    h_grid, w_grid, embedding_dim = 100, 100, 7
-    embedding = Embedding(h_grid, w_grid, embedding_dim)
+    grid_num, embedding_dim = 100, 7
+    embedding = Embedding(grid_num, embedding_dim)
     opt = TrainOptions().parse()
     # print options to help debugging
     print(' '.join(sys.argv))
@@ -124,4 +97,4 @@ if __name__ == '__main__':
     for i, data_i in enumerate(dataloader):
         print(data_i)
         src_keypoint = data_i['source_keypoint']
-        embedding(data_i)
+        embedding(src_keypoint)

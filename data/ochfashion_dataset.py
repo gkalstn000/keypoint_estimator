@@ -33,7 +33,7 @@ class OCHFashionDataset(BaseDataset) :
         R, R_inv, T = get_affine_params(self.max_height, self.max_wigth, self.affine_alpha, self.affine_beta)
         # Inverse Affine transformation으로, keypoint -> target_keypoint generate
         target_keypoint = keypoint @ R_inv - R_inv @ T
-        target_keypoint[occlusion_label == 1] = np.nan
+        target_keypoint[keypoint == -1] = np.nan
 
         max_point = np.array([self.max_height - 1, self.max_wigth - 1])
         min_point = np.array([0, 0])

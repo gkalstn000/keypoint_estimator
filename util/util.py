@@ -6,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import key_point_name as kpn
 import pandas as pd
+from tqdm import trange, tqdm
+from PIL import Image
+from skimage.draw import disk, line_aa, polygon
 
 def mkdirs(paths):
     if isinstance(paths, list) and not isinstance(paths, str):
@@ -35,19 +38,160 @@ def find_class_in_module(target_cls_name, module):
 
     return cls
 
+def save_network(net, label, epoch, opt):
+    save_filename = '%s_net_%s.pth' % (epoch, label)
+    save_path = os.path.join(opt.checkpoints_dir, opt.id, save_filename)
+    torch.save(net.cpu().state_dict(), save_path)
+    if len(opt.gpu_ids) and torch.cuda.is_available():
+        net.cuda()
+def load_network(net, label, epoch, opt):
+    save_filename = '%s_net_%s.pth' % (epoch, label)
+    save_dir = os.path.join(opt.checkpoints_dir, opt.id)
+    save_path = os.path.join(save_dir, save_filename)
+    weights = torch.load(save_path)
+    net.load_state_dict(weights)
+    return net
+
+def save_image(image_numpy, image_path, create_dir=False):
+    if create_dir:
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    if len(image_numpy.shape) == 2:
+        image_numpy = np.expand_dims(image_numpy, axis=2)
+    if image_numpy.shape[2] == 1:
+        image_numpy = np.repeat(image_numpy, 3, 2)
+    image_pil = Image.fromarray(image_numpy.astype(np.uint8))
+
+    # save to png
+    image_pil.save(image_path.replace('.jpg', '.png'))
+
+# ========== GFLA code ============
+LIMB_SEQ = [[1,2], [1,5], [2,3], [3,4], [5,6], [6,7], [1,8], [8,9],
+           [9,10], [1,11], [11,12], [12,13], [1,0], [0,14], [14,16],
+           [0,15], [15,17]]
+COLORS = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
+          [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
+          [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
+MISSING_VALUE = -1
+
+def draw_pose_from_cords(cords, img_size) :
+    '''
+    cords device -> cpu -> heatmap
+    :param cords: [B, 18, 2] size torch tensor keypoint coordinates
+    :param img_size: [h, w] list type image size
+    :param sigma: size of heatmap
+    :return: cpu device torch tensor heatmap of keypoint
+    '''
+    cords = cords.detach().cpu().numpy()
+    cords_maximum = np.nanmax(cords, axis=1, keepdims = True)
+    cords_minimum = np.nanmin(cords, axis=1, keepdims = True)
+    cords_norm = (cords - (cords_minimum - 15)) / ((cords_maximum + 15) - (cords_minimum - 15)) * np.array(img_size)
+    cords_norm = cords_norm.astype(float)
+    cords_norm[np.isnan(cords_norm)] = MISSING_VALUE
+    cords_norm = cords_norm.astype(int)
+    color_map, gray_map = [], []
+    for cord in tqdm(cords_norm, 'Transform keypoint to map') :
+        color, gray = __draw_pose_from_cords(cord, img_size)
+        color_map.append(color)
+        gray_map.append(gray)
+
+    color_map = np.stack(color_map, axis = 0)
+    gray_map = np.stack(gray_map, axis = 0)
+    return color_map, gray_map
+
+def __draw_pose_from_cords(pose_joints, img_size, radius=8):
+    colors = np.zeros(shape=img_size + (3, ), dtype=np.uint8)
+    mask = np.zeros(shape=img_size, dtype=bool)
+
+    for f, t in LIMB_SEQ:
+        from_missing = pose_joints[f][0] == MISSING_VALUE or pose_joints[f][1] == MISSING_VALUE
+        to_missing = pose_joints[t][0] == MISSING_VALUE or pose_joints[t][1] == MISSING_VALUE
+        if from_missing or to_missing:
+            continue
+        yy, xx, val = line_aa(pose_joints[f][0], pose_joints[f][1], pose_joints[t][0], pose_joints[t][1])
+        colors[yy, xx] = np.expand_dims(val, 1) * 255
+        mask[yy, xx] = True
+
+    for i, joint in enumerate(pose_joints):
+        if pose_joints[i][0] == MISSING_VALUE or pose_joints[i][1] == MISSING_VALUE:
+            continue
+        yy, xx = disk((joint[0], joint[1]), radius=radius, shape=img_size)
+        colors[yy, xx] = COLORS[i]
+        mask[yy, xx] = True
+    return colors, mask
+
+def cords_to_map(cords, img_size, sigma=6):
+    colors = np.zeros(shape=img_size + (3,), dtype=np.uint8)
+    '''
+    cords device -> cpu -> heatmap
+    :param cords: [B, 18, 2] size torch tensor keypoint coordinates
+    :param img_size: [h, w] list type image size
+    :param sigma: size of heatmap
+    :return: cpu device torch tensor heatmap of keypoint
+    '''
+    cords = cords.cpu().numpy()
+    cords_maximum = np.nanmax(cords, axis=1, keepdims = True)
+    cords_minimum = np.nanmin(cords, axis=1, keepdims = True)
+    cords_norm = (cords - (cords_minimum - 15)) / ((cords_maximum + 15) - (cords_minimum - 15)) * np.array(img_size)
+    cords_norm = cords_norm.astype(float)
+    cords_norm[np.isnan(cords_norm)] = MISSING_VALUE
+
+    point_map = np.zeros(img_size + cords_norm.shape[0:2], dtype='float32').transpose((2, 0, 1, 3))
+    for i in trange(point_map.shape[0], desc = 'coords to map') :
+        cord = cords_norm[i]
+        for j, point in enumerate(cord) :
+            if point[0] == MISSING_VALUE or point[1] == MISSING_VALUE:
+                continue
+            point_0 = int(point[0])
+            point_1 = int(point[1])
+            xx, yy = np.meshgrid(np.arange(img_size[1]), np.arange(img_size[0]))
+            point_map[i][..., j] = np.exp(-((yy - point_0) ** 2 + (xx - point_1) ** 2) / (2 * sigma ** 2))
 
 
 
 
+    for i in range(point_map.shape[0]) :
+        array = (point_map[i].max(-1) * 255).astype(np.uint8)
+        save_array_to_image(array, f'tmp/test_heatmap{i}.png')
+
+    return point_map
+
+def map_to_cord(pose_map, threshold=0.1):
+    all_peaks = [[] for i in range(18)]
+    pose_map = pose_map[..., :18]
+
+    y, x, z = np.where(np.logical_and(pose_map == pose_map.max(axis = (0, 1)),
+                                     pose_map > threshold))
+    for x_i, y_i, z_i in zip(x, y, z):
+        all_peaks[z_i].append([x_i, y_i])
+
+    x_values = []
+    y_values = []
+
+    for i in range(18):
+        if len(all_peaks[i]) != 0:
+            x_values.append(all_peaks[i][0][0])
+            y_values.append(all_peaks[i][0][1])
+        else:
+            x_values.append(MISSING_VALUE)
+            y_values.append(MISSING_VALUE)
+
+    return np.concatenate([np.expand_dims(y_values, -1), np.expand_dims(x_values, -1)], axis=1)
+
+
+# ========== GFLA code ============
+def save_array_to_image(array, path) :
+    img = Image.fromarray(array)
+    img.save(path)
+    print('save image to', path)
 
 
 
 
-
-
-
-
-
+# ======================== Trash ========================
+# ======================== Trash ========================
+# ======================== Trash ========================
+# ======================== Trash ========================
+# ======================== Trash ========================
 
 def load_train_data(data_path) :
     '''

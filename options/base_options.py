@@ -6,6 +6,7 @@ import os
 import pickle
 from util import util
 import data
+import models
 
 class BaseOptions(object):
 
@@ -17,7 +18,7 @@ class BaseOptions(object):
         parser.add_argument('--id', type=str, default='default', help='experiment ID. the experiment dir will be set as "./checkpoint/id/"')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
-        parser.add_argument('--model', type=str, default='kpestimator', help='which model to use')
+        parser.add_argument('--model', type=str, default='kpe', help='which model to use')
         parser.add_argument('--phase', type=str, default='train', help='[train / test]')
         # input/output sizes
         parser.add_argument('--batch_size', type=int, default=2048, help='input batch size')
@@ -30,16 +31,10 @@ class BaseOptions(object):
         parser.add_argument('--load_from_opt_file', action='store_true', help='load the options from checkpoints and use that as default')
         # for displays
         parser.add_argument('--display_winsize', type=int, default=400, help='display window size')
-        # for model
+        # for generator
+        parser.add_argument('--netG', type=str, default='transformer', help='selects model to use for netG (transformer)')
         parser.add_argument('--init_type', type=str, default='xavier', help='network initialization [normal|xavier|kaiming|orthogonal]')
         parser.add_argument('--init_variance', type=float, default=0.02, help='variance of the initialization distribution')
-
-
-
-
-        # # Transformer params
-        # parser.add_argument('--h_grid', type=int, default=100, help='number of height embedding')
-        # parser.add_argument('--w_grid', type=int, default=100, help='number of height embedding')
 
         self.initialized = True
 
@@ -53,10 +48,10 @@ class BaseOptions(object):
         # get the basic options
         opt, unknown = parser.parse_known_args()
 
-        # # modify model-related parser options
-        # model_name = opt.model
-        # model_option_setter = models.get_option_setter(model_name)
-        # parser = model_option_setter(parser, self.isTrain)
+        # modify model-related parser options
+        model_name = opt.model
+        model_option_setter = models.get_option_setter(model_name)
+        parser = model_option_setter(parser, self.isTrain)
 
         # modify dataset-related parser options
         dataset_mode = opt.dataset_mode

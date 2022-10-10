@@ -1,0 +1,8 @@
+jupyter==1.0.0
+matplotlib==3.6.0
+numpy @ file:///tmp/abs_653_j00fmm/croots/recipe/numpy_and_numpy_base_1659432701727/work
+pandas==1.5.0
+Pillow @ file:///home/conda/feedstock_root/build_artifacts/pillow_1621287973719/work
+scikit-learn==1.1.2
+scipy==1.9.1
+tqdm==4.64.1
