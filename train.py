@@ -50,7 +50,7 @@ if __name__ == "__main__":
                                                 losses, iter_counter.time_per_iter)
                 visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
-            if iter_counter.needs_displaying():
+            if iter_counter.needs_displaying() :
                 visuals = dict()
                 source_color_map, _ = draw_pose_from_cords(data_i['source_keypoint'] * torch.Tensor([opt.max_height-1, opt.max_width-1]),
                                                            (opt.max_height, opt.max_width))

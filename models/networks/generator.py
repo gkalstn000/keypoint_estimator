@@ -41,27 +41,28 @@ class TransformerGenerator(BaseNetwork):
         self.embedding = Embedding(grid_num=opt.grid_num, embedding_dim=opt.embedding_dim)
         # Encoder Network
         self.layers = nn.ModuleList([EncoderLayer(d_model = d_model, d_k = opt.d_k, d_v = opt.d_v, n_heads = opt.n_heads, d_ff = opt.d_ff) for _ in range(opt.n_layers)])
-        # keypoint
+        # ========= keypoint =========
         self.Keypoint_Regressor = nn.ModuleList()
         input_ = d_model
         for output in [opt.d_ff, 32]:
             self.Keypoint_Regressor.append(fc_layer(input_, output))
             input_ = output
-        layer = nn.Sequential(
+        keypoint_regressor_lastlayer = nn.Sequential(
             nn.Linear(input_, opt.output_dim),
+            nn.Sigmoid()
         )
-        self.Keypoint_Regressor.append(layer)
-        # occlusion
+        self.Keypoint_Regressor.append(keypoint_regressor_lastlayer)
+        # ========= occlusion =========
         self.Occlusion_Classifier = nn.ModuleList()
         input_ = d_model # embedding*2+1
         for output in [opt.d_ff, 32]:
             self.Occlusion_Classifier.append(fc_layer(input_, output))
             input_ = output
-        layer = nn.Sequential(
+        occlusion_classifier_lastlayer = nn.Sequential(
             nn.Linear(input_, 1),
             nn.Sigmoid()
         )
-        self.Occlusion_Classifier.append(layer)
+        self.Occlusion_Classifier.append(occlusion_classifier_lastlayer)
     def forward(self, x):
         if len(x.size()) != 3 :
             x = x.unsqueeze(0)
@@ -71,11 +72,11 @@ class TransformerGenerator(BaseNetwork):
             output = layer(output)     # output: [batch_size, max_len, d_model]
         output = self.gelu(self.final_linear(output)) # [batch_size, max_pred, d_model]
         # keypoint
-        keypoint_logits = output
+        keypoint_logits = output.clone()
         for linear in self.Keypoint_Regressor :
             keypoint_logits = linear(keypoint_logits)
         # occlusion
-        occlusion_logits = output
+        occlusion_logits = output.clone()
         for linear in self.Occlusion_Classifier :
             occlusion_logits = linear(occlusion_logits)
 

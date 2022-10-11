@@ -21,7 +21,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--beta1', type=float, default=0.0, help='momentum term of adam')
         parser.add_argument('--beta2', type=float, default=0.9, help='momentum term of adam')
         parser.add_argument('--lr', type=float, default=0.005, help='initial learning rate for adam')
-        parser.add_argument('--lambda_mse', type=float, default=0.5, help='keypoint MSE loss weight')
-        parser.add_argument('--lambda_bce', type=float, default=10.0, help='occlusion BCE loss weight')
+        parser.add_argument('--lambda_mse', type=float, default=10, help='keypoint MSE loss weight')
+        parser.add_argument('--lambda_bce', type=float, default=1, help='occlusion BCE loss weight')
         self.isTrain = True
         return parser

@@ -46,6 +46,7 @@ class OCHFashionDataset(BaseDataset) :
         source_keypoint[croppd_cond] = np.nan
         # Normalize Source keypoint [0, 1] <--Min-Max norm
         source_keypoint /= max_point
+        target_keypoint /= max_point
 
         input_dict = {'source_keypoint': source_keypoint,
                       'target_keypoint': target_keypoint,

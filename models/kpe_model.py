@@ -1,7 +1,7 @@
 import torch
 import models.networks as networks
 import util.util as util
-
+torch.autograd.set_detect_anomaly(True)
 class KPEModel(torch.nn.Module):
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -23,6 +23,8 @@ class KPEModel(torch.nn.Module):
             self.criterionMSE = torch.nn.MSELoss() # for keypoint loss
             self.criterionBCE = torch.nn.BCELoss() # for occlusion loss
 
+        self.max_point_tensor = torch.Tensor([opt.max_height-1, opt.max_width]).cuda()
+
     def forward(self, data, mode):
         source, target, occlusion_label = self.preprocess_input(data)
 
@@ -32,9 +34,11 @@ class KPEModel(torch.nn.Module):
         elif mode == 'inference' :
             with torch.no_grad() :
                 fake_keypoint, occlusion_pred = self.generate_fake(source)
-                real_color_map, real_gray_map = util.draw_pose_from_cords(target,
+                occlusion_index = (occlusion_pred >= 0.5).squeeze()
+                fake_keypoint[occlusion_index] = float('nan')
+                real_color_map, real_gray_map = util.draw_pose_from_cords(target * self.max_point_tensor,
                                                                           (self.opt.max_height, self.opt.max_width))
-                fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint,
+                fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint * self.max_point_tensor,
                                                                           (self.opt.max_height, self.opt.max_width))
                 return fake_keypoint, occlusion_pred, real_gray_map, fake_gray_map
 
@@ -72,16 +76,24 @@ class KPEModel(torch.nn.Module):
         G_losses = {}
         G_map = {}
         fake_keypoint, occlusion_pred = self.generate_fake(source)
-        # Keypoint to map
-        real_color_map, real_gray_map = util.draw_pose_from_cords(target, (self.opt.max_height, self.opt.max_width))
-        fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint, (self.opt.max_height, self.opt.max_width))
+        # Calculate losses
+        G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
+        G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
+        # ========= Keypoint to map =========
+        # TODO: Overhead 줄여야함.
+        fake_keypoint_ = fake_keypoint.detach().clone()
+        occlusion_pred_ = occlusion_pred.detach().clone()
+        occlusion_index = (occlusion_pred_ >= 0.5).squeeze()
+        fake_keypoint_[occlusion_index] = float('nan')
+
+        real_color_map, real_gray_map = util.draw_pose_from_cords(target*self.max_point_tensor, (self.opt.max_height, self.opt.max_width))
+        fake_color_map, fake_gray_map = util.draw_pose_from_cords(fake_keypoint_*self.max_point_tensor, (self.opt.max_height, self.opt.max_width))
         G_map['real_color_map'] = real_color_map
         G_map['real_gray_map'] = real_gray_map
         G_map['fake_color_map'] = fake_color_map
         G_map['fake_gray_map'] = fake_gray_map
-        # Calculate losses
-        G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
-        G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
+
+
 
         # pred_fake, pred_real = self.discriminate(fake_gray_map, real_gray_map)
 
