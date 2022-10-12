@@ -31,8 +31,8 @@ class TrainOptions(BaseOptions):
         if opt.no_TTUR:
             parser.set_defaults(beta1=0.5, beta2=0.999)
         # for loss weight
-        parser.add_argument('--lambda_mse', type=float, default=1, help='keypoint MSE loss weight')
-        parser.add_argument('--lambda_bce', type=float, default=1, help='occlusion BCE loss weight')
+        parser.add_argument('--lambda_mse', type=float, default=20, help='keypoint MSE loss weight')
+        parser.add_argument('--lambda_bce', type=float, default=20, help='occlusion BCE loss weight')
 
         # for discriminators
         parser.add_argument('--ndf', type=int, default=16, help='# of discrim filters in first conv layer')
