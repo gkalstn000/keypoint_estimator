@@ -8,12 +8,10 @@ import key_point_name as kpn
 
 
 def L2_score(source, target, prediction, occlusion_tgt) :
-    mask_point = torch.Tensor([-1, -1])
-    mask_index = source == mask_point[None, None, :]
+    mask_index = source.isnan()
     mask_index = torch.logical_and(mask_index[:, :, 0], mask_index[:, :, 1]) * 1.0
 
     difference = target - prediction
-    difference[occlusion_tgt == 1] = float('nan') # occlusion keypoint score에서 제외
     # 이 밑으로 total_score, key_point별 score, masked_total_score, masked_key_point별 score
     l2 = (difference ** 2).sum(dim = -1) ** 0.5
     l2_total = l2.nanmean()
@@ -28,26 +26,24 @@ def L2_score(source, target, prediction, occlusion_tgt) :
             [l2_masked_total.tolist()] + l2_masked_key_point.tolist()
 
 def pckh_score(source, target, prediction, occlusion_tgt) :
-    mask_point = torch.Tensor([-1, -1])
-    mask_index = source == mask_point[None, None, :]
+    mask_index = source.isnan()
     mask_index = torch.logical_and(mask_index[:, :, 0], mask_index[:, :, 1]) * 1.0
 
     PARTS_SEL = [0, 1, 14, 15, 16, 17]
-    face_points = target[:, PARTS_SEL]
-    max_h, _ = face_points[:, :, 0].max(-1)
-    min_h, _ = face_points[:, :, 0].min(-1)
-    max_w, _ = face_points[:, :, 1].max(-1)
-    min_w, _ = face_points[:, :, 1].min(-1)
+    face_points = target[:, PARTS_SEL].cpu().numpy()
+    max_h = np.nanmax(face_points[:, :, 0], -1)
+    min_h = np.nanmin(face_points[:, :, 0], -1)
+    max_w = np.nanmax(face_points[:, :, 1], -1)
+    min_w = np.nanmin(face_points[:, :, 1], -1)
 
-    h_threshold = max_h - min_h
-    w_threshold = max_w - min_w
+    h_threshold = torch.Tensor(max_h - min_h).cuda()
+    w_threshold = torch.Tensor(max_w - min_w).cuda()
     threshold = torch.stack([h_threshold, w_threshold], dim=1)
     difference = torch.abs(target - prediction)
 
     # 이 밑으로 total_score, key_point별 score, masked_total_score, masked_key_point별 score
     check_threshold = difference <= threshold.unsqueeze(1)
     pckh = torch.logical_and(check_threshold[:, :, 0], check_threshold[:, :, 1]).float()
-    pckh[occlusion_tgt == 1] = float('nan')  # occlusion keypoint score에서 제외
 
     pckh_total = pckh.nanmean()
     pckh_key_point = pckh.nanmean(0)
@@ -59,6 +55,8 @@ def pckh_score(source, target, prediction, occlusion_tgt) :
     return [pckh_total.tolist()] + pckh_key_point.tolist(), \
             [pckh_masked_tatal.tolist()] + pckh_masked_key_ponint.tolist()
 def occlusion_score(occlusion_pred, occlusion_tgt) :
+    occlusion_pred = occlusion_pred.cpu()
+    occlusion_tgt = occlusion_tgt.cpu()
     occlusion_pred = (occlusion_pred.squeeze() > 0.5) * 1
 
     occlusion_pred_flat = occlusion_pred.view(-1, 1).squeeze()

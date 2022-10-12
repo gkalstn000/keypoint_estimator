@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from data.base_dataset import BaseDataset, df_to_array, make_affine_params_batch, get_affine_params
+from data.base_dataset import BaseDataset, df_to_array, make_affine_params_batch, get_affine_params, normalize
 from util import util
 
 class OCHFashionDataset(BaseDataset) :
@@ -46,7 +46,7 @@ class OCHFashionDataset(BaseDataset) :
         source_keypoint[croppd_cond] = np.nan
         # Normalize Source keypoint [0, 1] <--Min-Max norm
         source_keypoint /= max_point
-        target_keypoint /= max_point
+        target_keypoint = normalize(target_keypoint)
 
         input_dict = {'source_keypoint': source_keypoint,
                       'target_keypoint': target_keypoint,

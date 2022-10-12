@@ -15,6 +15,10 @@ class BaseDataset(data.Dataset):
     def initialize(self, opt):
         pass
 
+def normalize(keypoint): # min-max normalize
+    max_point, min_point = np.nanmax(keypoint, 0) + 15, np.nanmin(keypoint, 0) - 15
+    return (keypoint - min_point) / (max_point - min_point)
+
 def df_to_array(df):
     data_list = []
     for index, (keypoints_y, keypoints_x, label) in tqdm(df.iterrows(), desc='Make DataFrame to numpy array'):

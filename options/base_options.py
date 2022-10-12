@@ -7,6 +7,7 @@ import pickle
 from util import util
 import data
 import models
+from datetime import datetime
 
 class BaseOptions(object):
 
@@ -37,7 +38,9 @@ class BaseOptions(object):
         parser.add_argument('--init_variance', type=float, default=0.02, help='variance of the initialization distribution')
 
         self.initialized = True
-
+    def generate_id(self, opt):
+        now = datetime.now()
+        return f'{now.strftime("%m%d")}_embedding_dim_{opt.embedding_dim}_nlayers_{opt.n_layers}_dkv_{opt.d_k}_nheads_{opt.n_heads}'
     def gather_options(self):
         # initialize parser with basic options
         if not self.initialized:
@@ -58,7 +61,8 @@ class BaseOptions(object):
         dataset_option_setter = data.get_option_setter(dataset_mode)
         parser = dataset_option_setter(parser, self.isTrain)
         opt, unknown = parser.parse_known_args()
-
+        if opt.id == 'default' :
+            opt.id = self.generate_id(opt)
         # if there is opt_file, load it.
         # The previous default options will be overwritten
         if opt.load_from_opt_file:

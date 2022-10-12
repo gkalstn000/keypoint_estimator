@@ -71,4 +71,4 @@ class IterationCounter():
         return (self.total_steps_so_far % self.opt.print_freq) < self.opt.batch_size
 
     def needs_displaying(self):
-        return (self.total_steps_so_far % self.opt.display_freq) < self.opt.batch_size
+        return (self.total_steps_so_far % self.opt.display_freq) < self.opt.batch_size and self.opt.display

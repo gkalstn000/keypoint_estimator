@@ -40,8 +40,10 @@ if __name__ == "__main__":
         iter_counter.record_epoch_start(epoch)
         for i, data_i in enumerate(dataloader, start=iter_counter.epoch_iter):
             iter_counter.record_one_iteration()
+            if i % opt.D_steps_per_G == 0:
+                trainer.run_generator_one_step(data_i)
 
-            trainer.run_generator_one_step(data_i)
+
 
             # Visualizations
             if iter_counter.needs_printing():
@@ -52,12 +54,10 @@ if __name__ == "__main__":
 
             if iter_counter.needs_displaying() :
                 visuals = dict()
-                source_color_map, _ = draw_pose_from_cords(data_i['source_keypoint'] * torch.Tensor([opt.max_height-1, opt.max_width-1]),
-                                                           (opt.max_height, opt.max_width))
                 latest_map = trainer.get_latest_maps()
-                visuals['source_color_map'] = source_color_map
+                visuals['source_color_map'] = latest_map['src_color_map']
                 visuals['fake_color_map'] = latest_map['fake_color_map']
-                visuals['real_color_map'] = latest_map['real_color_map']
+                visuals['tgt_color_map'] = latest_map['tgt_color_map']
                 visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far, iter_counter.epoch_iter, len(dataloader.dataset), opt)
 
             if iter_counter.needs_saving():
