@@ -42,8 +42,8 @@ if __name__ == "__main__":
             iter_counter.record_one_iteration()
             if i % opt.D_steps_per_G == 0:
                 trainer.run_generator_one_step(data_i)
-
-
+            if opt.use_D :
+                trainer.run_discriminator_one_step(data_i)
 
             # Visualizations
             if iter_counter.needs_printing():
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                                                 losses, iter_counter.time_per_iter)
                 visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
-            if iter_counter.needs_displaying() :
+            if iter_counter.needs_displaying() and False :
                 visuals = dict()
                 latest_map = trainer.get_latest_maps()
                 visuals['source_color_map'] = latest_map['src_color_map']

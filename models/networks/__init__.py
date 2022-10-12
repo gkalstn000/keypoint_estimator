@@ -2,6 +2,8 @@
 import torch
 from models.networks.base_network import BaseNetwork
 from models.networks.generator import *
+from models.networks.loss import *
+from models.networks.discriminator import *
 import util.util as util
 
 
@@ -21,9 +23,9 @@ def modify_commandline_options(parser, is_train):
 
     netG_cls = find_network_using_name(opt.netG, 'generator')
     parser = netG_cls.modify_commandline_options(parser, is_train)
-    # if is_train:
-    #     netD_cls = find_network_using_name(opt.netD, 'discriminator')
-    #     parser = netD_cls.modify_commandline_options(parser, is_train)
+    if is_train:
+        netD_cls = find_network_using_name(opt.netD, 'discriminator')
+        parser = netD_cls.modify_commandline_options(parser, is_train)
     return parser
 
 
@@ -39,3 +41,7 @@ def create_network(cls, opt):
 def define_G(opt) :
     netG_cls = find_network_using_name(opt.netG, 'generator')
     return create_network(netG_cls, opt)
+
+def define_D(opt):
+    netD_cls = find_network_using_name(opt.netD, 'discriminator')
+    return create_network(netD_cls, opt)

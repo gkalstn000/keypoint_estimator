@@ -1,6 +1,7 @@
 import torch
 import models.networks as networks
 import util.util as util
+import numpy as np
 torch.autograd.set_detect_anomaly(True)
 class KPEModel(torch.nn.Module):
     @staticmethod
@@ -16,12 +17,17 @@ class KPEModel(torch.nn.Module):
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
 
-        self.netG = self.initialize_networks(opt)
+        self.netG, self.netD = self.initialize_networks(opt)
 
         # set loss functions
         if opt.isTrain:
             self.criterionMSE = torch.nn.MSELoss() # for keypoint loss
             self.criterionBCE = torch.nn.BCELoss() # for occlusion loss
+            self.criterionGAN = networks.GANLoss(
+                opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
+            self.criterionFeat = torch.nn.L1Loss()
+            if not opt.no_vgg_loss:
+                self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
 
         self.max_point_tensor = torch.Tensor([opt.max_height-1, opt.max_width]).cuda()
 
@@ -33,31 +39,44 @@ class KPEModel(torch.nn.Module):
         if mode == 'generator' :
             g_losses, g_map, fake_keypoint = self.compute_generator_loss(source, target, occlusion_label)
             return g_losses, g_map, fake_keypoint
+        elif mode == 'discriminator':
+            d_loss = self.compute_discriminator_loss(
+                source, target, occlusion_label)
+            return d_loss
         elif mode == 'inference' :
             with torch.no_grad() :
                 fake_keypoint, occlusion_pred = self.generate_fake(source)
                 self.transform_keypoints_to_heatmap(source, target, fake_keypoint, occlusion_pred)
                 return fake_keypoint, occlusion_pred
-
+        else:
+            raise ValueError("|mode| is invalid")
     def create_optimizers(self, opt):
         G_params = list(self.netG.parameters())
-
+        if opt.isTrain:
+            D_params = list(self.netD.parameters())
         beta1, beta2 = opt.beta1, opt.beta2
-        G_lr, D_lr = opt.lr, opt.lr
+        if opt.no_TTUR:
+            G_lr, D_lr = opt.lr, opt.lr
+        else:
+            G_lr, D_lr = opt.lr / 2, opt.lr * 2
 
         optimizer_G = torch.optim.Adam(G_params, lr=G_lr, betas=(beta1, beta2))
+        optimizer_D = torch.optim.Adam(D_params, lr=D_lr, betas=(beta1, beta2))
 
-        return optimizer_G
+        return optimizer_G, optimizer_D
 
     def save(self, epoch):
         util.save_network(self.netG, 'G', epoch, self.opt)
 
     def initialize_networks(self, opt):
         netG = networks.define_G(opt)
+        netD = networks.define_D(opt) if opt.isTrain else None
 
         if not opt.isTrain or opt.continue_train:
             netG = util.load_network(netG, 'G', opt.which_epoch, opt)
-        return netG
+            if opt.isTrain:
+                netD = util.load_network(netD, 'D', opt.which_epoch, opt)
+        return netG, netD
 
     def preprocess_input(self, data):
         # preprocess the input, such as moving the tensors to GPUs and
@@ -77,12 +96,45 @@ class KPEModel(torch.nn.Module):
         G_losses['MSE_Loss'] = self.criterionMSE(fake_keypoint[~target.isnan()], target[~target.isnan()]) * self.opt.lambda_mse
         G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
         # ========= Keypoint to map =========
-        if self.opt.display:
+        if self.opt.use_D:
             self.transform_keypoints_to_heatmap(source, target, fake_keypoint, occlusion_pred)
-        # pred_fake, pred_real = self.discriminate(fake_gray_map, real_gray_map)
+            pred_fake, pred_real = self.discriminate(self.heatmap['fake_color_map'], self.heatmap['tgt_color_map'])
+
+            G_losses['GAN'] = self.criterionGAN(pred_fake, True,
+                                                for_discriminator=False)
+            if not self.opt.no_ganFeat_loss:
+                num_D = len(pred_fake)
+                GAN_Feat_loss = self.FloatTensor(1).fill_(0)
+                for i in range(num_D):  # for each discriminator
+                    # last output is the final prediction, so we exclude it
+                    num_intermediate_outputs = len(pred_fake[i]) - 1
+                    for j in range(num_intermediate_outputs):  # for each layer output
+                        unweighted_loss = self.criterionFeat(
+                            pred_fake[i][j], pred_real[i][j].detach())
+                        GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
+                G_losses['GAN_Feat'] = GAN_Feat_loss
+
+            if not self.opt.no_vgg_loss:
+                fake_image = torch.Tensor(self.heatmap['fake_color_map'].transpose(0, 3, 1, 2)).float().cuda()
+                real_image = torch.Tensor(self.heatmap['tgt_color_map'].transpose(0, 3, 1, 2)).float().cuda()
+                G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
+                                  * self.opt.lambda_vgg
 
         return G_losses, self.heatmap, fake_keypoint
+    def compute_discriminator_loss(self, source, target, occlusion_label):
+        D_losses = {}
+        with torch.no_grad():
+            fake_image, _ = self.generate_fake(source)
+            fake_image = fake_image.detach()
+            fake_image.requires_grad_()
 
+        pred_fake, pred_real = self.discriminate(self.heatmap['fake_color_map'], self.heatmap['tgt_color_map'])
+
+        D_losses['D_Fake'] = self.criterionGAN(pred_fake, False,
+                                               for_discriminator=True)
+        D_losses['D_real'] = self.criterionGAN(pred_real, True,
+                                               for_discriminator=True)
+        return D_losses
     # TODO: Overhead 줄여야함.
     def transform_keypoints_to_heatmap(self, source_keypoint, target_keypoint, fake_keypoint, fake_occlusion_label) :
         fake_keypoint_ = fake_keypoint.detach().clone()
@@ -99,18 +151,37 @@ class KPEModel(torch.nn.Module):
         self.heatmap['fake_color_map'] = fake_color_map
         self.heatmap['fake_gray_map'] = fake_gray_map
 
-    def compute_discriminator_loss(self, input_semantics, real_image):
-        pass
+
 
     def generate_fake(self, source):
         fake_keypoint, occlusion_pred = self.netG(source)
         return fake_keypoint, occlusion_pred
     def discriminate(self, fake_image, real_image):
-        pass
+        # In Batch Normalization, the fake and real images are
+        # recommended to be in the same batch to avoid disparate
+        # statistics in fake and real images.
+        # So both fake and real images are fed to D all at once.
+        fake_and_real = np.concatenate([fake_image, real_image], axis=0)
+        fake_and_real = torch.Tensor(fake_and_real.transpose(0, 3, 1, 2)).float().cuda() # [B, H, W, C] -> [B, C, H, W]
+        discriminator_out = self.netD(fake_and_real)
+
+        pred_fake, pred_real = self.divide_pred(discriminator_out)
+
+        return pred_fake, pred_real
     # Take the prediction of fake and real images from the combined batch
     def divide_pred(self, pred):
         # the prediction contains the intermediate outputs of multiscale GAN,
         # so it's usually a list
-        pass
+        if type(pred) == list:
+            fake = []
+            real = []
+            for p in pred:
+                fake.append([tensor[:tensor.size(0) // 2] for tensor in p])
+                real.append([tensor[tensor.size(0) // 2:] for tensor in p])
+        else:
+            fake = pred[:pred.size(0) // 2]
+            real = pred[pred.size(0) // 2:]
+
+        return fake, real
     def use_gpu(self):
         return len(self.opt.gpu_ids) > 0

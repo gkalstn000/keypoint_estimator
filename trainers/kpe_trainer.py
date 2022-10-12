@@ -26,7 +26,8 @@ class KPETrainer():
 
         self.generated = None
         if opt.isTrain:
-            self.optimizer_G = self.kpe_model_on_one_gpu.create_optimizers(opt)
+            self.optimizer_G, self.optimizer_D =\
+                self.kpe_model_on_one_gpu.create_optimizers(opt)
             self.old_lr = opt.lr
 
     def run_generator_one_step(self, data):
@@ -38,9 +39,15 @@ class KPETrainer():
         self.g_losses = g_losses
         self.g_map = g_map
         self.generated = generated
-
+    def run_discriminator_one_step(self, data):
+        self.optimizer_D.zero_grad()
+        d_losses = self.kpe_model(data, mode='discriminator')
+        d_loss = sum(d_losses.values()).mean()
+        d_loss.backward()
+        self.optimizer_D.step()
+        self.d_losses = d_losses
     def get_latest_losses(self):
-        return {**self.g_losses}
+        return {**self.g_losses,  **self.d_losses}
     def get_latest_maps(self):
         return {**self.g_map}
     def get_latest_generated(self):
