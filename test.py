@@ -10,10 +10,13 @@ import data
 from options.test_options import TestOptions
 from models.kpe_model import KPEModel
 from util.visualizer import Visualizer
-from util import html
+from util import html, util
 from util.util import draw_pose_from_cords
 from scores.scores import score
 import torch
+import numpy as np
+import pandas as pd
+import key_point_name as kpn
 
 opt = TestOptions().parse()
 
@@ -31,6 +34,15 @@ webpage = html.HTML(web_dir,
                     'Experiment = %s, Phase = %s, Epoch = %s' %
                     (opt.id, opt.phase, opt.which_epoch))
 
+l2_scores = []
+l2_mask_scores = []
+pckh_scores = []
+pckh_mask_scores = []
+
+accuracys = []
+recalls = []
+precisions = []
+f1s = []
 
 # test
 for i, data_i in enumerate(dataloader):
@@ -57,6 +69,35 @@ for i, data_i in enumerate(dataloader):
                                                                            occlusion_pred.squeeze(),
                                                                            data_i['occlusion_label'])
 
+l2_scores.append(l2)
+l2_mask_scores.append(l2_mask)
+pckh_scores.append(pckh)
+pckh_mask_scores.append(pckh_mask)
 
+# occlusion scores
+accuracys.append(acc)
+recalls.append(recall)
+precisions.append(precision)
+f1s.append(f1)
 
+l2 = np.nanmean(np.stack(l2_scores, axis=0), axis=0)
+l2_mask = np.nanmean(np.stack(l2_mask_scores, axis=0), axis=0)
+pckh = np.nanmean(np.stack(pckh_scores, axis=0), axis=0)
+pckh_mask = np.nanmean(np.stack(pckh_mask_scores, axis=0), axis=0)
+keypoint_df = pd.DataFrame([l2, l2_mask, pckh, pckh_mask],
+                           columns=['total'] + kpn.key_point_name,
+                           index=['l2', 'l2_masked', 'pckh', 'pckh_masked'])
+
+accuracys = np.nanmean(np.stack(accuracys, axis=0), axis=0)
+recalls = np.nanmean(np.stack(recalls, axis=0), axis=0)
+precisions = np.nanmean(np.stack(precisions, axis=0), axis=0)
+f1s = np.nanmean(np.stack(f1s, axis=0), axis=0)
+
+occlusion_df = pd.DataFrame([accuracys, recalls, precisions, f1s],
+                            columns=['total'] + kpn.key_point_name,
+                            index=['Acc', 'Recall', 'Precision', 'F1'])
+save_path = os.path.join(opt.results_dir, opt.id, 'test_scores')
+util.mkdirs(save_path)
+keypoint_df.to_csv(os.path.join(save_path, 'keypoint_score.csv'), index = False)
+occlusion_df.to_csv(os.path.join(save_path, 'occlusion_score.csv'), index = False)
 webpage.save()
