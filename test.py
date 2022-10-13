@@ -98,6 +98,6 @@ occlusion_df = pd.DataFrame([accuracys, recalls, precisions, f1s],
                             index=['Acc', 'Recall', 'Precision', 'F1'])
 save_path = os.path.join(opt.results_dir, opt.id, 'test_scores')
 util.mkdirs(save_path)
-keypoint_df.to_csv(os.path.join(save_path, 'keypoint_score.csv'), index = False)
-occlusion_df.to_csv(os.path.join(save_path, 'occlusion_score.csv'), index = False)
+keypoint_df.to_csv(os.path.join(save_path, 'keypoint_score.csv'), index = True)
+occlusion_df.to_csv(os.path.join(save_path, 'occlusion_score.csv'), index = True)
 webpage.save()
