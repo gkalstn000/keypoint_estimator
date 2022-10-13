@@ -65,7 +65,8 @@ class BaseOptions(object):
         parser = dataset_option_setter(parser, self.isTrain)
         opt, unknown = parser.parse_known_args()
         if opt.id == 'default' :
-            opt.id = self.generate_id(opt)
+            parser.set_defaults(id=self.generate_id(opt))
+            opt, unknown = parser.parse_known_args()
         # if there is opt_file, load it.
         # The previous default options will be overwritten
         if opt.load_from_opt_file:

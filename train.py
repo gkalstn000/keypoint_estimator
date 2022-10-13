@@ -52,7 +52,7 @@ if __name__ == "__main__":
                                                 losses, iter_counter.time_per_iter)
                 visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
-            if iter_counter.needs_displaying() and False :
+            if iter_counter.needs_displaying():
                 visuals = dict()
                 latest_map = trainer.get_latest_maps()
                 visuals['source_color_map'] = latest_map['src_color_map']

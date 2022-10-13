@@ -26,8 +26,6 @@ class KPEModel(torch.nn.Module):
             self.criterionGAN = networks.GANLoss(
                 opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
             self.criterionFeat = torch.nn.L1Loss()
-            if not opt.no_vgg_loss:
-                self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
 
         self.max_point_tensor = torch.Tensor([opt.max_height-1, opt.max_width]).cuda()
 
@@ -67,6 +65,7 @@ class KPEModel(torch.nn.Module):
 
     def save(self, epoch):
         util.save_network(self.netG, 'G', epoch, self.opt)
+        util.save_network(self.netD, 'D', epoch, self.opt)
 
     def initialize_networks(self, opt):
         netG = networks.define_G(opt)
@@ -97,7 +96,7 @@ class KPEModel(torch.nn.Module):
         G_losses['BCE_loss'] = self.criterionBCE(occlusion_pred.squeeze(), occlusion_label.float()) * self.opt.lambda_bce
         # ========= Keypoint to map =========
         if self.opt.use_D:
-            self.transform_keypoints_to_heatmap(source, target, fake_keypoint, occlusion_pred)
+            self.transform_keypoints_to_heatmap(source, target, fake_keypoint, occlusion_label)
             pred_fake, pred_real = self.discriminate(self.heatmap['fake_color_map'], self.heatmap['tgt_color_map'])
 
             G_losses['GAN'] = self.criterionGAN(pred_fake, True,
@@ -114,20 +113,15 @@ class KPEModel(torch.nn.Module):
                         GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
                 G_losses['GAN_Feat'] = GAN_Feat_loss
 
-            if not self.opt.no_vgg_loss:
-                fake_image = torch.Tensor(self.heatmap['fake_color_map'].transpose(0, 3, 1, 2)).float().cuda()
-                real_image = torch.Tensor(self.heatmap['tgt_color_map'].transpose(0, 3, 1, 2)).float().cuda()
-                G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
-                                  * self.opt.lambda_vgg
 
         return G_losses, self.heatmap, fake_keypoint
     def compute_discriminator_loss(self, source, target, occlusion_label):
         D_losses = {}
         with torch.no_grad():
-            fake_image, _ = self.generate_fake(source)
-            fake_image = fake_image.detach()
-            fake_image.requires_grad_()
-
+            fake_keypoint, occlusion_pred = self.generate_fake(source)
+            fake_keypoint = fake_keypoint.detach()
+            fake_keypoint.requires_grad_()
+        self.transform_keypoints_to_heatmap(source, target, fake_keypoint, occlusion_label)
         pred_fake, pred_real = self.discriminate(self.heatmap['fake_color_map'], self.heatmap['tgt_color_map'])
 
         D_losses['D_Fake'] = self.criterionGAN(pred_fake, False,
